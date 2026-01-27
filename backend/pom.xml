@@ -10,7 +10,6 @@
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.2.5</version>
         <relativePath/>
-        <scope>import</scope>
     </parent>
 
     <groupId>com.licoreria</groupId>
@@ -78,6 +77,7 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
+            <version>10.10.0</version>
         </dependency>
 
         <dependency>
