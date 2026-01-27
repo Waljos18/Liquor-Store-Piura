@@ -58,6 +58,9 @@ public class Venta {
     @Builder.Default
     private Estado estado = Estado.COMPLETADA;
 
+    @Column(length = 500)
+    private String observaciones;
+
     @Column(name = "fecha_creacion", updatable = false)
     private Instant fechaCreacion;
 

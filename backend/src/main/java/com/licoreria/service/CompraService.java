@@ -1,6 +1,9 @@
 package com.licoreria.service;
 
 import com.licoreria.dto.ApiResponse;
+import com.licoreria.dto.ProductoDTO;
+import com.licoreria.dto.ProveedorDTO;
+import com.licoreria.dto.UsuarioDTO;
 import com.licoreria.dto.compra.CompraDTO;
 import com.licoreria.dto.compra.CrearCompraRequest;
 import com.licoreria.dto.compra.DetalleCompraDTO;
@@ -15,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -81,7 +83,8 @@ public class CompraService {
                 .build();
 
         // Asignar compra a detalles
-        detalles.forEach(d -> d.setCompra(compra));
+        final Compra compraFinal = compra;
+        detalles.forEach(d -> d.setCompra(compraFinal));
         compra.setDetalles(detalles);
 
         // Guardar compra
@@ -157,7 +160,7 @@ public class CompraService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         // Solo ADMIN puede anular
-        if (!usuario.getRol().equals("ADMIN")) {
+        if (usuario.getRol() != Usuario.Rol.ADMIN) {
             return ApiResponse.error("FORBIDDEN", "Solo administradores pueden anular compras");
         }
 
@@ -230,24 +233,26 @@ public class CompraService {
         return dto;
     }
 
-    private com.licoreria.dto.ProveedorDTO toProveedorDto(Proveedor proveedor) {
-        com.licoreria.dto.ProveedorDTO dto = new com.licoreria.dto.ProveedorDTO();
+    private ProveedorDTO toProveedorDto(Proveedor proveedor) {
+        ProveedorDTO dto = new ProveedorDTO();
         dto.setId(proveedor.getId());
         dto.setRazonSocial(proveedor.getRazonSocial());
         dto.setRuc(proveedor.getRuc());
         return dto;
     }
 
-    private com.licoreria.dto.UsuarioDTO toUsuarioDto(Usuario usuario) {
-        com.licoreria.dto.UsuarioDTO dto = new com.licoreria.dto.UsuarioDTO();
+    private UsuarioDTO toUsuarioDto(Usuario usuario) {
+        UsuarioDTO dto = new UsuarioDTO();
         dto.setId(usuario.getId());
         dto.setUsername(usuario.getUsername());
+        dto.setEmail(usuario.getEmail());
         dto.setNombre(usuario.getNombre());
+        dto.setRol(usuario.getRol().name());
         return dto;
     }
 
-    private com.licoreria.dto.ProductoDTO toProductoDto(Producto producto) {
-        com.licoreria.dto.ProductoDTO dto = new com.licoreria.dto.ProductoDTO();
+    private ProductoDTO toProductoDto(Producto producto) {
+        ProductoDTO dto = new ProductoDTO();
         dto.setId(producto.getId());
         dto.setNombre(producto.getNombre());
         dto.setCodigoBarras(producto.getCodigoBarras());

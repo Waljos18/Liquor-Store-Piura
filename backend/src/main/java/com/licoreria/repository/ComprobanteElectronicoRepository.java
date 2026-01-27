@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -15,4 +16,8 @@ public interface ComprobanteElectronicoRepository extends JpaRepository<Comproba
 
     @Query(value = "SELECT COALESCE(MAX(CAST(numero AS INTEGER)), 0) + 1 FROM comprobantes_electronicos WHERE serie = :serie", nativeQuery = true)
     long siguienteNumeroPorSerie(@Param("serie") String serie);
+
+    List<ComprobanteElectronico> findByEstadoSunat(ComprobanteElectronico.EstadoSunat estado);
+
+    Optional<ComprobanteElectronico> findBySerieAndNumero(String serie, String numero);
 }

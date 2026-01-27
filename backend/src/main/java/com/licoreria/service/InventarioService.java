@@ -2,9 +2,7 @@ package com.licoreria.service;
 
 import com.licoreria.dto.ApiResponse;
 import com.licoreria.dto.ProductoDTO;
-import com.licoreria.entity.MovimientoInventario;
-import com.licoreria.entity.Producto;
-import com.licoreria.entity.Usuario;
+import com.licoreria.entity.*;
 import com.licoreria.repository.MovimientoInventarioRepository;
 import com.licoreria.repository.ProductoRepository;
 import com.licoreria.repository.UsuarioRepository;

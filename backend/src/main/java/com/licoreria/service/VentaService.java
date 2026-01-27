@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -126,7 +127,8 @@ public class VentaService {
                 .build();
 
         // Asignar venta a detalles
-        detalles.forEach(d -> d.setVenta(venta));
+        final Venta ventaFinal = venta;
+        detalles.forEach(d -> d.setVenta(ventaFinal));
         venta.setDetalles(detalles);
 
         // Guardar venta
@@ -158,7 +160,7 @@ public class VentaService {
         // Obtener promociones activas para el producto
         List<Promocion> promociones = promocionRepository.findPromocionesActivasByProducto(
                 producto.getId(), 
-                java.time.LocalDateTime.now()
+                LocalDateTime.now()
         );
 
         BigDecimal descuentoTotal = BigDecimal.ZERO;
@@ -240,7 +242,7 @@ public class VentaService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         // Solo ADMIN puede anular
-        if (!usuario.getRol().equals("ADMIN")) {
+        if (usuario.getRol() != Usuario.Rol.ADMIN) {
             return ApiResponse.error("FORBIDDEN", "Solo administradores pueden anular ventas");
         }
 
@@ -339,14 +341,14 @@ public class VentaService {
         dto.setUsername(usuario.getUsername());
         dto.setEmail(usuario.getEmail());
         dto.setNombre(usuario.getNombre());
-        dto.setRol(usuario.getRol());
+        dto.setRol(usuario.getRol().name());
         return dto;
     }
 
     private ClienteDTO toClienteDto(Cliente cliente) {
         ClienteDTO dto = new ClienteDTO();
         dto.setId(cliente.getId());
-        dto.setTipoDocumento(cliente.getTipoDocumento());
+        dto.setTipoDocumento(cliente.getTipoDocumento().name());
         dto.setNumeroDocumento(cliente.getNumeroDocumento());
         dto.setNombre(cliente.getNombre());
         dto.setTelefono(cliente.getTelefono());
