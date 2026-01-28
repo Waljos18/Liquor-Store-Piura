@@ -1,0 +1,5 @@
+ALTER TABLE compras
+    ADD COLUMN estado VARCHAR(20) NOT NULL DEFAULT 'COMPLETADA';
+
+ALTER TABLE compras
+    ADD COLUMN observaciones TEXT;
