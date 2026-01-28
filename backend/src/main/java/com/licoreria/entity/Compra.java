@@ -29,7 +29,7 @@ public class Compra {
     @JoinColumn(name = "proveedor_id", nullable = false)
     private Proveedor proveedor;
 
-    @Column(name = "fecha_compra", nullable = false)
+    @Column(name = "fecha", nullable = false)
     private LocalDate fechaCompra;
 
     @Column(nullable = false, precision = 10, scale = 2)
