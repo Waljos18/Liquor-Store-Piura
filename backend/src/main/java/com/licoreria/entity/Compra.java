@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class Compra {
     private Proveedor proveedor;
 
     @Column(name = "fecha", nullable = false)
-    private LocalDate fechaCompra;
+    private LocalDateTime fechaCompra;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
@@ -58,7 +58,7 @@ public class Compra {
     void prePersist() {
         fechaCreacion = Instant.now();
         if (fechaCompra == null) {
-            fechaCompra = LocalDate.now();
+            fechaCompra = LocalDateTime.now();
         }
     }
 

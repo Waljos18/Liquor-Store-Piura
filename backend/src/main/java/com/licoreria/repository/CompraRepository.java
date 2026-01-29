@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
@@ -20,10 +20,9 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
 
     @Query("SELECT c FROM Compra c WHERE c.fechaCompra BETWEEN :fechaDesde AND :fechaHasta")
     Page<Compra> findByFechaCompraBetween(
-            @Param("fechaDesde") LocalDate fechaDesde,
-            @Param("fechaHasta") LocalDate fechaHasta,
-            Pageable pageable
-    );
+            @Param("fechaDesde") LocalDateTime fechaDesde,
+            @Param("fechaHasta") LocalDateTime fechaHasta,
+            Pageable pageable);
 
     @Query("SELECT c FROM Compra c WHERE c.estado = :estado")
     Page<Compra> findByEstado(@Param("estado") Compra.Estado estado, Pageable pageable);
