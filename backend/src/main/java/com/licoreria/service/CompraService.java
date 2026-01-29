@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +77,8 @@ public class CompraService {
         Compra compra = Compra.builder()
                 .numeroCompra(numeroCompra)
                 .proveedor(proveedor)
-                .fechaCompra(request.getFechaCompra() != null ? request.getFechaCompra() : LocalDate.now())
+                .fechaCompra(request.getFechaCompra() != null ? request.getFechaCompra().atStartOfDay()
+                        : LocalDateTime.now())
                 .total(total)
                 .usuario(usuario)
                 .estado(Compra.Estado.COMPLETADA)
@@ -93,14 +96,14 @@ public class CompraService {
         // Actualizar stock y precios, crear movimientos de inventario
         for (DetalleCompra detalle : detalles) {
             Producto producto = detalle.getProducto();
-            
+
             // Actualizar stock
             int stockAnterior = producto.getStockActual();
             producto.setStockActual(stockAnterior + detalle.getCantidad());
-            
+
             // Actualizar precio de compra (opcional, se puede configurar)
             producto.setPrecioCompra(detalle.getPrecioUnitario());
-            
+
             productoRepository.save(producto);
 
             // Crear movimiento de inventario
@@ -129,14 +132,14 @@ public class CompraService {
             LocalDate fechaDesde,
             LocalDate fechaHasta,
             String estado,
-            Pageable pageable
-    ) {
+            Pageable pageable) {
         Page<Compra> page;
 
         if (proveedorId != null) {
             page = compraRepository.findByProveedorId(proveedorId, pageable);
         } else if (fechaDesde != null && fechaHasta != null) {
-            page = compraRepository.findByFechaCompraBetween(fechaDesde, fechaHasta, pageable);
+            page = compraRepository.findByFechaCompraBetween(fechaDesde.atStartOfDay(),
+                    fechaHasta.atTime(LocalTime.MAX), pageable);
         } else if (estado != null) {
             page = compraRepository.findByEstado(Compra.Estado.valueOf(estado), pageable);
         } else {
@@ -176,11 +179,11 @@ public class CompraService {
             Producto producto = detalle.getProducto();
             int stockActual = producto.getStockActual();
             if (stockActual < detalle.getCantidad()) {
-                return ApiResponse.error("INVALID", 
-                    "No se puede anular la compra. El stock actual de " + producto.getNombre() + 
-                    " es menor que la cantidad comprada.");
+                return ApiResponse.error("INVALID",
+                        "No se puede anular la compra. El stock actual de " + producto.getNombre() +
+                                " es menor que la cantidad comprada.");
             }
-            
+
             producto.setStockActual(stockActual - detalle.getCantidad());
             productoRepository.save(producto);
 
@@ -207,13 +210,13 @@ public class CompraService {
         dto.setId(compra.getId());
         dto.setNumeroCompra(compra.getNumeroCompra());
         dto.setProveedor(toProveedorDto(compra.getProveedor()));
-        dto.setFechaCompra(compra.getFechaCompra());
+        dto.setFechaCompra(compra.getFechaCompra() != null ? compra.getFechaCompra().toLocalDate() : null);
         dto.setTotal(compra.getTotal());
         dto.setUsuario(toUsuarioDto(compra.getUsuario()));
         dto.setEstado(compra.getEstado().name());
         dto.setObservaciones(compra.getObservaciones());
         dto.setFechaCreacion(compra.getFechaCreacion());
-        
+
         if (compra.getDetalles() != null) {
             dto.setDetalles(compra.getDetalles().stream()
                     .map(this::toDetalleDto)

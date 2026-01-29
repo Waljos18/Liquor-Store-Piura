@@ -73,6 +73,7 @@ CREATE TABLE ventas (
     total DECIMAL(10,2) NOT NULL,
     forma_pago VARCHAR(20) NOT NULL CHECK (forma_pago IN ('EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'MIXTO')),
     estado VARCHAR(20) DEFAULT 'COMPLETADA' CHECK (estado IN ('COMPLETADA', 'ANULADA', 'PENDIENTE')),
+    observaciones TEXT,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_ventas_fecha ON ventas(fecha);
@@ -110,19 +111,6 @@ CREATE INDEX idx_comprobantes_venta ON comprobantes_electronicos(venta_id);
 CREATE INDEX idx_comprobantes_estado ON comprobantes_electronicos(estado_sunat);
 CREATE INDEX idx_comprobantes_fecha ON comprobantes_electronicos(fecha_emision);
 
-CREATE TABLE movimientos_inventario (
-    id BIGSERIAL PRIMARY KEY,
-    producto_id BIGINT REFERENCES productos(id),
-    tipo_movimiento VARCHAR(20) NOT NULL CHECK (tipo_movimiento IN ('ENTRADA', 'SALIDA', 'AJUSTE')),
-    cantidad INTEGER NOT NULL,
-    motivo VARCHAR(200),
-    usuario_id BIGINT REFERENCES usuarios(id),
-    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX idx_movimientos_producto ON movimientos_inventario(producto_id);
-CREATE INDEX idx_movimientos_fecha ON movimientos_inventario(fecha);
-CREATE INDEX idx_movimientos_tipo ON movimientos_inventario(tipo_movimiento);
-
 CREATE TABLE proveedores (
     id BIGSERIAL PRIMARY KEY,
     razon_social VARCHAR(200) NOT NULL,
@@ -130,20 +118,25 @@ CREATE TABLE proveedores (
     direccion TEXT,
     telefono VARCHAR(20),
     email VARCHAR(100),
+    activo BOOLEAN DEFAULT TRUE,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_proveedores_ruc ON proveedores(ruc);
 
 CREATE TABLE compras (
     id BIGSERIAL PRIMARY KEY,
+    numero_compra VARCHAR(20) UNIQUE NOT NULL,
     proveedor_id BIGINT REFERENCES proveedores(id),
     fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total DECIMAL(10,2) NOT NULL,
     usuario_id BIGINT REFERENCES usuarios(id),
+    estado VARCHAR(20) DEFAULT 'COMPLETADA' NOT NULL,
+    observaciones TEXT,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_compras_fecha ON compras(fecha);
 CREATE INDEX idx_compras_proveedor ON compras(proveedor_id);
+CREATE INDEX idx_compras_numero ON compras(numero_compra);
 
 CREATE TABLE detalle_compras (
     id BIGSERIAL PRIMARY KEY,
@@ -155,6 +148,23 @@ CREATE TABLE detalle_compras (
 );
 CREATE INDEX idx_detalle_compras_compra ON detalle_compras(compra_id);
 CREATE INDEX idx_detalle_compras_producto ON detalle_compras(producto_id);
+
+CREATE TABLE movimientos_inventario (
+    id BIGSERIAL PRIMARY KEY,
+    producto_id BIGINT REFERENCES productos(id),
+    tipo_movimiento VARCHAR(20) NOT NULL CHECK (tipo_movimiento IN ('ENTRADA', 'SALIDA', 'AJUSTE')),
+    cantidad INTEGER NOT NULL,
+    motivo VARCHAR(200),
+    usuario_id BIGINT REFERENCES usuarios(id),
+    venta_id BIGINT REFERENCES ventas(id),
+    compra_id BIGINT REFERENCES compras(id),
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_movimientos_producto ON movimientos_inventario(producto_id);
+CREATE INDEX idx_movimientos_fecha ON movimientos_inventario(fecha);
+CREATE INDEX idx_movimientos_tipo ON movimientos_inventario(tipo_movimiento);
+CREATE INDEX idx_movimientos_venta ON movimientos_inventario(venta_id);
+CREATE INDEX idx_movimientos_compra ON movimientos_inventario(compra_id);
 
 CREATE TABLE promociones (
     id BIGSERIAL PRIMARY KEY,
