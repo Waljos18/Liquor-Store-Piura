@@ -1,0 +1,1431 @@
+{
+	"info": {
+		"_postman_id": "licoreria-backend-collection",
+		"name": "Licorería Backend API",
+		"description": "Colección completa de endpoints para el sistema de licorería",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "01. Autenticación",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data) {",
+									"        pm.environment.set('access_token', response.data.accessToken);",
+									"        pm.environment.set('refresh_token', response.data.refreshToken);",
+									"        console.log('Tokens guardados correctamente');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"Admin123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login"]
+						},
+						"description": "Iniciar sesión y obtener tokens JWT"
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "refresh"]
+						},
+						"description": "Renovar access token usando refresh token"
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "logout"]
+						},
+						"description": "Cerrar sesión"
+					}
+				}
+			]
+		},
+		{
+			"name": "02. Productos",
+			"item": [
+				{
+					"name": "Listar Productos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/productos?search=&categoriaId=&activo=true&stockBajo=false&page=0&size=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "productos"],
+							"query": [
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "categoriaId",
+									"value": ""
+								},
+								{
+									"key": "activo",
+									"value": "true"
+								},
+								{
+									"key": "stockBajo",
+									"value": "false"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Listar productos con filtros y paginación"
+					}
+				},
+				{
+					"name": "Buscar Producto (POS)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/productos/buscar?q=ron",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "productos", "buscar"],
+							"query": [
+								{
+									"key": "q",
+									"value": "ron"
+								}
+							]
+						},
+						"description": "Búsqueda rápida para POS (código o nombre)"
+					}
+				},
+				{
+					"name": "Obtener Producto por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/productos/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "productos", "1"]
+						},
+						"description": "Obtener producto por ID"
+					}
+				},
+				{
+					"name": "Crear Producto",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"codigoBarras\": \"7891234567890\",\n    \"nombre\": \"Ron Flor de Caña 12 años\",\n    \"marca\": \"Flor de Caña\",\n    \"categoriaId\": 1,\n    \"precioCompra\": 45.00,\n    \"precioVenta\": 65.00,\n    \"stockInicial\": 50,\n    \"stockMinimo\": 10,\n    \"stockMaximo\": 100,\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/productos",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "productos"]
+						},
+						"description": "Crear nuevo producto"
+					}
+				},
+				{
+					"name": "Actualizar Producto",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"codigoBarras\": \"7891234567890\",\n    \"nombre\": \"Ron Flor de Caña 12 años\",\n    \"marca\": \"Flor de Caña\",\n    \"categoriaId\": 1,\n    \"precioCompra\": 45.00,\n    \"precioVenta\": 70.00,\n    \"stockMinimo\": 15,\n    \"stockMaximo\": 100,\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/productos/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "productos", "1"]
+						},
+						"description": "Actualizar producto existente"
+					}
+				},
+				{
+					"name": "Desactivar Producto",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/productos/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "productos", "1"]
+						},
+						"description": "Desactivar producto (eliminación lógica)"
+					}
+				}
+			]
+		},
+		{
+			"name": "03. Clientes",
+			"item": [
+				{
+					"name": "Listar Clientes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/clientes?search=&page=0&size=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "clientes"],
+							"query": [
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Listar clientes con búsqueda y paginación"
+					}
+				},
+				{
+					"name": "Obtener Cliente por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/clientes/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "clientes", "1"]
+						},
+						"description": "Obtener cliente por ID"
+					}
+				},
+				{
+					"name": "Obtener Cliente por Documento",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/clientes/documento/12345678",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "clientes", "documento", "12345678"]
+						},
+						"description": "Obtener cliente por número de documento"
+					}
+				},
+				{
+					"name": "Crear Cliente",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tipoDocumento\": \"DNI\",\n    \"numeroDocumento\": \"12345678\",\n    \"nombre\": \"Juan Pérez García\",\n    \"telefono\": \"987654321\",\n    \"email\": \"juan.perez@email.com\",\n    \"puntosFidelizacion\": 0\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/clientes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "clientes"]
+						},
+						"description": "Crear nuevo cliente"
+					}
+				},
+				{
+					"name": "Actualizar Cliente",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tipoDocumento\": \"DNI\",\n    \"numeroDocumento\": \"12345678\",\n    \"nombre\": \"Juan Pérez García\",\n    \"telefono\": \"987654321\",\n    \"email\": \"juan.perez@email.com\",\n    \"puntosFidelizacion\": 100\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/clientes/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "clientes", "1"]
+						},
+						"description": "Actualizar cliente existente"
+					}
+				},
+				{
+					"name": "Eliminar Cliente",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/clientes/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "clientes", "1"]
+						},
+						"description": "Eliminar cliente"
+					}
+				}
+			]
+		},
+		{
+			"name": "04. Ventas",
+			"item": [
+				{
+					"name": "Crear Venta",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clienteId\": 1,\n    \"items\": [\n        {\n            \"productoId\": 1,\n            \"cantidad\": 2,\n            \"precioUnitario\": 65.00\n        },\n        {\n            \"productoId\": 2,\n            \"cantidad\": 1,\n            \"precioUnitario\": 35.00\n        }\n    ],\n    \"formaPago\": \"EFECTIVO\",\n    \"descuento\": 0.00,\n    \"observaciones\": \"Venta de prueba\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/ventas",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "ventas"]
+						},
+						"description": "Crear nueva venta con validación de stock y aplicación de promociones"
+					}
+				},
+				{
+					"name": "Listar Ventas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/ventas?fechaDesde=&fechaHasta=&usuarioId=&clienteId=&estado=&page=0&size=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "ventas"],
+							"query": [
+								{
+									"key": "fechaDesde",
+									"value": ""
+								},
+								{
+									"key": "fechaHasta",
+									"value": ""
+								},
+								{
+									"key": "usuarioId",
+									"value": ""
+								},
+								{
+									"key": "clienteId",
+									"value": ""
+								},
+								{
+									"key": "estado",
+									"value": ""
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Listar ventas con filtros opcionales"
+					}
+				},
+				{
+					"name": "Obtener Venta por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/ventas/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "ventas", "1"]
+						},
+						"description": "Obtener detalles completos de una venta"
+					}
+				},
+				{
+					"name": "Anular Venta",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/ventas/1/anular?motivo=Anulación por administrador",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "ventas", "1", "anular"],
+							"query": [
+								{
+									"key": "motivo",
+									"value": "Anulación por administrador"
+								}
+							]
+						},
+						"description": "Anular venta (solo ADMIN). Restaura el stock de productos."
+					}
+				}
+			]
+		},
+		{
+			"name": "05. Compras",
+			"item": [
+				{
+					"name": "Crear Compra",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"proveedorId\": 1,\n    \"numeroFactura\": \"F001-000001\",\n    \"fechaCompra\": \"2025-01-29\",\n    \"items\": [\n        {\n            \"productoId\": 1,\n            \"cantidad\": 50,\n            \"precioUnitario\": 45.00\n        },\n        {\n            \"productoId\": 2,\n            \"cantidad\": 30,\n            \"precioUnitario\": 25.00\n        }\n    ],\n    \"observaciones\": \"Compra de prueba\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/compras",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "compras"]
+						},
+						"description": "Registrar nueva compra y actualizar inventario"
+					}
+				},
+				{
+					"name": "Listar Compras",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/compras?proveedorId=&fechaDesde=&fechaHasta=&estado=&page=0&size=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "compras"],
+							"query": [
+								{
+									"key": "proveedorId",
+									"value": ""
+								},
+								{
+									"key": "fechaDesde",
+									"value": ""
+								},
+								{
+									"key": "fechaHasta",
+									"value": ""
+								},
+								{
+									"key": "estado",
+									"value": ""
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Listar compras con filtros opcionales"
+					}
+				},
+				{
+					"name": "Obtener Compra por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/compras/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "compras", "1"]
+						},
+						"description": "Obtener detalles completos de una compra"
+					}
+				},
+				{
+					"name": "Anular Compra",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/compras/1/anular",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "compras", "1", "anular"]
+						},
+						"description": "Anular compra (solo ADMIN). Restaura el stock de productos."
+					}
+				}
+			]
+		},
+		{
+			"name": "06. Categorías",
+			"item": [
+				{
+					"name": "Listar Categorías",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/categorias",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "categorias"]
+						},
+						"description": "Listar todas las categorías"
+					}
+				},
+				{
+					"name": "Obtener Categoría por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/categorias/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "categorias", "1"]
+						},
+						"description": "Obtener categoría por ID"
+					}
+				},
+				{
+					"name": "Crear Categoría",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Ron\",\n    \"descripcion\": \"Rones y aguardientes\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/categorias",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "categorias"]
+						},
+						"description": "Crear nueva categoría"
+					}
+				},
+				{
+					"name": "Actualizar Categoría",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Rones\",\n    \"descripcion\": \"Rones y aguardientes premium\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/categorias/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "categorias", "1"]
+						},
+						"description": "Actualizar categoría existente"
+					}
+				},
+				{
+					"name": "Eliminar Categoría",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/categorias/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "categorias", "1"]
+						},
+						"description": "Eliminar categoría"
+					}
+				}
+			]
+		},
+		{
+			"name": "07. Proveedores",
+			"item": [
+				{
+					"name": "Listar Proveedores",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/proveedores?search=&page=0&size=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "proveedores"],
+							"query": [
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Listar proveedores con búsqueda y paginación"
+					}
+				},
+				{
+					"name": "Obtener Proveedor por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/proveedores/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "proveedores", "1"]
+						},
+						"description": "Obtener proveedor por ID"
+					}
+				},
+				{
+					"name": "Crear Proveedor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tipoDocumento\": \"RUC\",\n    \"numeroDocumento\": \"20123456789\",\n    \"razonSocial\": \"Distribuidora de Licores S.A.C.\",\n    \"telefono\": \"987654321\",\n    \"email\": \"contacto@distribuidora.com\",\n    \"direccion\": \"Av. Principal 123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/proveedores",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "proveedores"]
+						},
+						"description": "Crear nuevo proveedor"
+					}
+				},
+				{
+					"name": "Actualizar Proveedor",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tipoDocumento\": \"RUC\",\n    \"numeroDocumento\": \"20123456789\",\n    \"razonSocial\": \"Distribuidora de Licores S.A.C.\",\n    \"telefono\": \"987654322\",\n    \"email\": \"contacto@distribuidora.com\",\n    \"direccion\": \"Av. Principal 123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/proveedores/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "proveedores", "1"]
+						},
+						"description": "Actualizar proveedor existente"
+					}
+				},
+				{
+					"name": "Eliminar Proveedor",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/proveedores/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "proveedores", "1"]
+						},
+						"description": "Eliminar proveedor"
+					}
+				}
+			]
+		},
+		{
+			"name": "08. Inventario",
+			"item": [
+				{
+					"name": "Listar Movimientos de Inventario",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/inventario/movimientos?productoId=&tipo=&fechaDesde=&fechaHasta=&page=0&size=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "inventario", "movimientos"],
+							"query": [
+								{
+									"key": "productoId",
+									"value": ""
+								},
+								{
+									"key": "tipo",
+									"value": ""
+								},
+								{
+									"key": "fechaDesde",
+									"value": ""
+								},
+								{
+									"key": "fechaHasta",
+									"value": ""
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Listar movimientos de inventario con filtros"
+					}
+				},
+				{
+					"name": "Ajustar Stock Manual",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productoId\": 1,\n    \"cantidad\": 10,\n    \"tipo\": \"AJUSTE\",\n    \"motivo\": \"Ajuste de inventario físico\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/inventario/ajustar",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "inventario", "ajustar"]
+						},
+						"description": "Ajustar stock manualmente"
+					}
+				},
+				{
+					"name": "Obtener Stock Actual",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/inventario/stock/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "inventario", "stock", "1"]
+						},
+						"description": "Obtener stock actual de un producto"
+					}
+				}
+			]
+		},
+		{
+			"name": "09. Promociones",
+			"item": [
+				{
+					"name": "Listar Promociones",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/promociones?activa=true&page=0&size=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "promociones"],
+							"query": [
+								{
+									"key": "activa",
+									"value": "true"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Listar promociones activas"
+					}
+				},
+				{
+					"name": "Obtener Promoción por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/promociones/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "promociones", "1"]
+						},
+						"description": "Obtener promoción por ID"
+					}
+				},
+				{
+					"name": "Crear Promoción",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"2x1 en Rones\",\n    \"descripcion\": \"Lleva 2 y paga 1 en rones seleccionados\",\n    \"fechaInicio\": \"2025-01-01T00:00:00Z\",\n    \"fechaFin\": \"2025-12-31T23:59:59Z\",\n    \"tipo\": \"2X1\",\n    \"productos\": [\n        {\n            \"productoId\": 1\n        },\n        {\n            \"productoId\": 2\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/promociones",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "promociones"]
+						},
+						"description": "Crear nueva promoción"
+					}
+				},
+				{
+					"name": "Actualizar Promoción",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"2x1 en Rones Premium\",\n    \"descripcion\": \"Lleva 2 y paga 1 en rones seleccionados\",\n    \"fechaInicio\": \"2025-01-01T00:00:00Z\",\n    \"fechaFin\": \"2025-12-31T23:59:59Z\",\n    \"tipo\": \"2X1\",\n    \"productos\": [\n        {\n            \"productoId\": 1\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/promociones/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "promociones", "1"]
+						},
+						"description": "Actualizar promoción existente"
+					}
+				},
+				{
+					"name": "Eliminar Promoción",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/promociones/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "promociones", "1"]
+						},
+						"description": "Eliminar promoción"
+					}
+				}
+			]
+		},
+		{
+			"name": "10. Packs",
+			"item": [
+				{
+					"name": "Listar Packs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/packs?activo=true&page=0&size=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "packs"],
+							"query": [
+								{
+									"key": "activo",
+									"value": "true"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Listar packs activos"
+					}
+				},
+				{
+					"name": "Obtener Pack por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/packs/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "packs", "1"]
+						},
+						"description": "Obtener pack por ID"
+					}
+				},
+				{
+					"name": "Crear Pack",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Pack Fiesta\",\n    \"descripcion\": \"Pack especial para fiestas\",\n    \"precio\": 150.00,\n    \"productos\": [\n        {\n            \"productoId\": 1,\n            \"cantidad\": 1\n        },\n        {\n            \"productoId\": 2,\n            \"cantidad\": 2\n        }\n    ],\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/packs",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "packs"]
+						},
+						"description": "Crear nuevo pack"
+					}
+				},
+				{
+					"name": "Actualizar Pack",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Pack Fiesta Premium\",\n    \"descripcion\": \"Pack especial para fiestas\",\n    \"precio\": 180.00,\n    \"productos\": [\n        {\n            \"productoId\": 1,\n            \"cantidad\": 1\n        },\n        {\n            \"productoId\": 2,\n            \"cantidad\": 2\n        }\n    ],\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/packs/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "packs", "1"]
+						},
+						"description": "Actualizar pack existente"
+					}
+				},
+				{
+					"name": "Eliminar Pack",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/packs/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "packs", "1"]
+						},
+						"description": "Eliminar pack"
+					}
+				}
+			]
+		},
+		{
+			"name": "11. Facturación",
+			"item": [
+				{
+					"name": "Emitir Factura",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ventaId\": 1,\n    \"tipoComprobante\": \"FACTURA\",\n    \"clienteRuc\": \"20123456789\",\n    \"clienteRazonSocial\": \"Cliente S.A.C.\",\n    \"clienteDireccion\": \"Av. Principal 456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/facturacion/emitir-factura",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "facturacion", "emitir-factura"]
+						},
+						"description": "Emitir factura electrónica para una venta"
+					}
+				},
+				{
+					"name": "Emitir Boleta",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"ventaId\": 1,\n    \"clienteDni\": \"12345678\",\n    \"clienteNombre\": \"Juan Pérez\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/facturacion/emitir-boleta",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "facturacion", "emitir-boleta"]
+						},
+						"description": "Emitir boleta electrónica para una venta"
+					}
+				},
+				{
+					"name": "Consultar Comprobante",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/facturacion/comprobantes/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "facturacion", "comprobantes", "1"]
+						},
+						"description": "Consultar estado de un comprobante electrónico"
+					}
+				}
+			]
+		},
+		{
+			"name": "12. Usuarios",
+			"item": [
+				{
+					"name": "Listar Usuarios",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/usuarios?search=&activo=&page=0&size=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "usuarios"],
+							"query": [
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "activo",
+									"value": ""
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Listar usuarios con búsqueda y paginación"
+					}
+				},
+				{
+					"name": "Obtener Usuario por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/usuarios/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "usuarios", "1"]
+						},
+						"description": "Obtener usuario por ID"
+					}
+				},
+				{
+					"name": "Crear Usuario",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"vendedor1\",\n    \"password\": \"vendedor123\",\n    \"nombre\": \"Carlos Vendedor\",\n    \"email\": \"vendedor@licoreria.com\",\n    \"rol\": \"VENDEDOR\",\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/usuarios",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "usuarios"]
+						},
+						"description": "Crear nuevo usuario"
+					}
+				},
+				{
+					"name": "Actualizar Usuario",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"vendedor1\",\n    \"nombre\": \"Carlos Vendedor Actualizado\",\n    \"email\": \"vendedor@licoreria.com\",\n    \"rol\": \"VENDEDOR\",\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/usuarios/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "usuarios", "1"]
+						},
+						"description": "Actualizar usuario existente"
+					}
+				},
+				{
+					"name": "Desactivar Usuario",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/usuarios/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "usuarios", "1"]
+						},
+						"description": "Desactivar usuario (eliminación lógica)"
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

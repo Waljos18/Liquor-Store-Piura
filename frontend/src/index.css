@@ -1,0 +1,368 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* Brand Colors */
+    --color-primary: #1976D2;
+    --color-secondary: #FF6F00;
+    --color-success: #4CAF50;
+    --color-error: #F44336;
+    --color-warning: #FF9800;
+
+    /* Backgrounds */
+    --color-background: #F5F5F5;
+    --color-surface: #FFFFFF;
+
+    /* Text */
+    --color-text-main: #212121;
+    --color-text-secondary: #757575;
+    --color-text-light: #FFFFFF;
+
+    /* Border */
+    --color-border: #E0E0E0;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    /* Typography */
+    --font-family-base: system-ui, -apple-system, sans-serif;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-main);
+    line-height: 1.5;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
+}
+
+/* Utilities */
+.text-center {
+    text-align: center;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.gap-2 {
+    gap: var(--spacing-sm);
+}
+
+.gap-4 {
+    gap: var(--spacing-md);
+}
+
+.w-full {
+    width: 100%;
+}
+
+.mt-4 {
+    margin-top: var(--spacing-md);
+}
+
+/* Components: Button */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s;
+    font-size: var(--font-size-base);
+}
+
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-secondary {
+    background-color: var(--color-secondary);
+    color: white;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-main);
+}
+
+.btn-outline:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.btn-danger {
+    background-color: var(--color-error);
+    color: white;
+}
+
+.btn-sm {
+    font-size: var(--font-size-sm);
+    padding: 4px 8px;
+}
+
+.btn-lg {
+    font-size: var(--font-size-lg);
+    padding: 12px 24px;
+}
+
+/* Components: Input */
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.input-label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text-main);
+}
+
+.input-field {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: var(--font-size-base);
+    transition: border-color 0.2s;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.input-error {
+    border-color: var(--color-error);
+}
+
+.input-error-msg {
+    font-size: var(--font-size-sm);
+    color: var(--color-error);
+}
+
+/* Components: Card */
+.card {
+    background-color: var(--color-surface);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.card-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Layout Styles */
+.layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.layout-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Header */
+.header {
+    height: 64px;
+    background-color: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-md);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 20;
+}
+
+.header-left,
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.header-title {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    margin: 0;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform 0.3s ease;
+    z-index: 10;
+}
+
+/* Mobile Sidebar logic */
+@media (max-width: 768px) {
+    .sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+        position: absolute;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9;
+    }
+}
+
+.sidebar-nav {
+    padding: var(--spacing-md) 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: 12px var(--spacing-md);
+    color: var(--color-text-main);
+    transition: background-color 0.2s;
+}
+
+.sidebar-link:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-link.active {
+    background-color: rgba(25, 118, 210, 0.1);
+    /* Primary with opacity */
+    color: var(--color-primary);
+    border-right: 3px solid var(--color-primary);
+}
+
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-md);
+    background-color: var(--color-background);
+}
+
+/* Utilities additions */
+.hidden {
+    display: none;
+}
+
+.md\:hidden {
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .md\:hidden {
+        display: none;
+    }
+
+    .hidden.md\:inline {
+        display: inline;
+    }
+}
