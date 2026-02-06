@@ -26,12 +26,17 @@ public class CrearVentaRequest {
 
     @Data
     public static class ItemVenta {
-        @NotNull(message = "Producto ID es requerido")
+        /** ID de producto (venta por unidades). Mutuamente excluyente con packId */
         private Long productoId;
 
+        /** ID de pack (venta por pack completo). Mutuamente excluyente con productoId */
+        private Long packId;
+
+        /** Cantidad: unidades si productoId; número de packs si packId */
         @NotNull(message = "Cantidad es requerida")
         private Integer cantidad;
 
-        private BigDecimal precioUnitario; // Opcional, se toma del producto si no se especifica
+        /** Precio unitario (opcional para producto; para pack se usa precio del pack) */
+        private BigDecimal precioUnitario;
     }
 }

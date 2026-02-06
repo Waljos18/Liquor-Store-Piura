@@ -31,6 +31,7 @@ public class VentaService {
 
     private final VentaRepository ventaRepository;
     private final ProductoRepository productoRepository;
+    private final PackRepository packRepository;
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
     private final MovimientoInventarioRepository movimientoInventarioRepository;
@@ -53,44 +54,87 @@ public class VentaService {
                     .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
         }
 
-        // Validar productos y stock
+        // Validar ítems (producto o pack) y armar detalles
         List<DetalleVenta> detalles = new ArrayList<>();
         BigDecimal subtotal = BigDecimal.ZERO;
 
         for (CrearVentaRequest.ItemVenta item : request.getItems()) {
-            Producto producto = productoRepository.findById(item.getProductoId())
-                    .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + item.getProductoId()));
+            boolean esProducto = item.getProductoId() != null;
+            boolean esPack = item.getPackId() != null;
 
-            if (!producto.getActivo()) {
-                return ApiResponse.error("INVALID", "El producto " + producto.getNombre() + " está inactivo");
+            if (esProducto && esPack) {
+                return ApiResponse.error("INVALID", "Cada ítem debe ser producto o pack, no ambos");
+            }
+            if (!esProducto && !esPack) {
+                return ApiResponse.error("INVALID", "Cada ítem debe indicar productoId o packId");
             }
 
-            if (producto.getStockActual() < item.getCantidad()) {
-                return ApiResponse.error("INSUFFICIENT_STOCK", 
-                    "Stock insuficiente para " + producto.getNombre() + 
-                    ". Disponible: " + producto.getStockActual() + ", Solicitado: " + item.getCantidad());
+            if (esPack) {
+                // Venta de pack: inventario se descuenta en unidades; se cobra precio del pack
+                Pack pack = packRepository.findById(item.getPackId())
+                        .orElseThrow(() -> new RuntimeException("Pack no encontrado: " + item.getPackId()));
+                if (!pack.getActivo()) {
+                    return ApiResponse.error("INVALID", "El pack " + pack.getNombre() + " está inactivo");
+                }
+
+                int cantidadPacks = item.getCantidad();
+                for (PackProducto pp : pack.getProductos()) {
+                    Producto p = pp.getProducto();
+                    int unidadesNecesarias = cantidadPacks * pp.getCantidad();
+                    if (p.getStockActual() < unidadesNecesarias) {
+                        return ApiResponse.error("INSUFFICIENT_STOCK",
+                                "Stock insuficiente para pack " + pack.getNombre() +
+                                        ". Producto " + p.getNombre() + ": disponible " + p.getStockActual() +
+                                        " unidades, se necesitan " + unidadesNecesarias);
+                    }
+                }
+
+                BigDecimal precioPack = pack.getPrecioPack();
+                BigDecimal subtotalItem = precioPack.multiply(new BigDecimal(cantidadPacks));
+
+                DetalleVenta detalle = DetalleVenta.builder()
+                        .producto(null)
+                        .pack(pack)
+                        .cantidad(cantidadPacks)
+                        .precioUnitario(precioPack)
+                        .descuento(BigDecimal.ZERO)
+                        .subtotal(subtotalItem)
+                        .build();
+                detalles.add(detalle);
+                subtotal = subtotal.add(subtotalItem);
+            } else {
+                // Venta por unidad de producto
+                Producto producto = productoRepository.findById(item.getProductoId())
+                        .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + item.getProductoId()));
+
+                if (!producto.getActivo()) {
+                    return ApiResponse.error("INVALID", "El producto " + producto.getNombre() + " está inactivo");
+                }
+                if (producto.getStockActual() < item.getCantidad()) {
+                    return ApiResponse.error("INSUFFICIENT_STOCK",
+                            "Stock insuficiente para " + producto.getNombre() +
+                                    ". Disponible: " + producto.getStockActual() + ", Solicitado: " + item.getCantidad());
+                }
+
+                BigDecimal precioUnitario = item.getPrecioUnitario() != null
+                        ? item.getPrecioUnitario()
+                        : producto.getPrecioVenta();
+                BigDecimal descuentoItem = calcularDescuento(producto, item.getCantidad(), precioUnitario);
+                BigDecimal subtotalItem = precioUnitario
+                        .multiply(new BigDecimal(item.getCantidad()))
+                        .subtract(descuentoItem);
+
+                DetalleVenta detalle = DetalleVenta.builder()
+                        .producto(producto)
+                        .pack(null)
+                        .cantidad(item.getCantidad())
+                        .precioUnitario(precioUnitario)
+                        .descuento(descuentoItem)
+                        .subtotal(subtotalItem)
+                        .build();
+                detalles.add(detalle);
+                subtotal = subtotal.add(subtotalItem);
             }
-
-            BigDecimal precioUnitario = item.getPrecioUnitario() != null 
-                    ? item.getPrecioUnitario() 
-                    : producto.getPrecioVenta();
-
-            // Aplicar promociones (simplificado - se puede mejorar)
-            BigDecimal descuentoItem = calcularDescuento(producto, item.getCantidad(), precioUnitario);
-            BigDecimal subtotalItem = precioUnitario
-                    .multiply(new BigDecimal(item.getCantidad()))
-                    .subtract(descuentoItem);
-
-            DetalleVenta detalle = DetalleVenta.builder()
-                    .producto(producto)
-                    .cantidad(item.getCantidad())
-                    .precioUnitario(precioUnitario)
-                    .descuento(descuentoItem)
-                    .subtotal(subtotalItem)
-                    .build();
-
-            detalles.add(detalle);
-            subtotal = subtotal.add(subtotalItem);
         }
 
         // Aplicar descuento general si existe
@@ -134,23 +178,42 @@ public class VentaService {
         // Guardar venta
         venta = ventaRepository.save(venta);
 
-        // Actualizar stock y crear movimientos de inventario
+        // Actualizar stock y crear movimientos de inventario (siempre en unidades)
         for (DetalleVenta detalle : detalles) {
-            Producto producto = detalle.getProducto();
-            int stockAnterior = producto.getStockActual();
-            producto.setStockActual(stockAnterior - detalle.getCantidad());
-            productoRepository.save(producto);
-
-            // Crear movimiento de inventario
-            MovimientoInventario movimiento = MovimientoInventario.builder()
-                    .producto(producto)
-                    .tipoMovimiento(MovimientoInventario.TipoMovimiento.SALIDA)
-                    .cantidad(detalle.getCantidad())
-                    .motivo("Venta #" + numeroVenta)
-                    .usuario(usuario)
-                    .venta(venta)
-                    .build();
-            movimientoInventarioRepository.save(movimiento);
+            if (detalle.getPack() != null) {
+                Pack pack = detalle.getPack();
+                int cantidadPacks = detalle.getCantidad();
+                String motivo = "Venta #" + numeroVenta + ": " + cantidadPacks + " " + pack.getNombre();
+                for (PackProducto pp : pack.getProductos()) {
+                    Producto producto = pp.getProducto();
+                    int unidades = cantidadPacks * pp.getCantidad();
+                    producto.setStockActual(producto.getStockActual() - unidades);
+                    productoRepository.save(producto);
+                    MovimientoInventario movimiento = MovimientoInventario.builder()
+                            .producto(producto)
+                            .tipoMovimiento(MovimientoInventario.TipoMovimiento.SALIDA)
+                            .cantidad(unidades)
+                            .motivo(motivo)
+                            .usuario(usuario)
+                            .venta(venta)
+                            .build();
+                    movimientoInventarioRepository.save(movimiento);
+                }
+            } else {
+                Producto producto = detalle.getProducto();
+                int stockAnterior = producto.getStockActual();
+                producto.setStockActual(stockAnterior - detalle.getCantidad());
+                productoRepository.save(producto);
+                MovimientoInventario movimiento = MovimientoInventario.builder()
+                        .producto(producto)
+                        .tipoMovimiento(MovimientoInventario.TipoMovimiento.SALIDA)
+                        .cantidad(detalle.getCantidad())
+                        .motivo("Venta #" + numeroVenta)
+                        .usuario(usuario)
+                        .venta(venta)
+                        .build();
+                movimientoInventarioRepository.save(movimiento);
+            }
         }
 
         return ApiResponse.ok(toDto(venta));
@@ -253,22 +316,41 @@ public class VentaService {
             return ApiResponse.error("INVALID", "La venta ya está anulada");
         }
 
-        // Restaurar stock
+        // Restaurar stock (en unidades; packs se descomponen)
         for (DetalleVenta detalle : venta.getDetalles()) {
-            Producto producto = detalle.getProducto();
-            producto.setStockActual(producto.getStockActual() + detalle.getCantidad());
-            productoRepository.save(producto);
-
-            // Crear movimiento de inventario de ajuste
-            MovimientoInventario movimiento = MovimientoInventario.builder()
-                    .producto(producto)
-                    .tipoMovimiento(MovimientoInventario.TipoMovimiento.ENTRADA)
-                    .cantidad(detalle.getCantidad())
-                    .motivo("Anulación de venta #" + venta.getNumeroVenta() + ". " + motivo)
-                    .usuario(usuario)
-                    .venta(venta)
-                    .build();
-            movimientoInventarioRepository.save(movimiento);
+            if (detalle.getPack() != null) {
+                Pack pack = detalle.getPack();
+                int cantidadPacks = detalle.getCantidad();
+                String motivoAnul = "Anulación de venta #" + venta.getNumeroVenta() + ". " + motivo;
+                for (PackProducto pp : pack.getProductos()) {
+                    Producto producto = pp.getProducto();
+                    int unidades = cantidadPacks * pp.getCantidad();
+                    producto.setStockActual(producto.getStockActual() + unidades);
+                    productoRepository.save(producto);
+                    MovimientoInventario movimiento = MovimientoInventario.builder()
+                            .producto(producto)
+                            .tipoMovimiento(MovimientoInventario.TipoMovimiento.ENTRADA)
+                            .cantidad(unidades)
+                            .motivo(motivoAnul)
+                            .usuario(usuario)
+                            .venta(venta)
+                            .build();
+                    movimientoInventarioRepository.save(movimiento);
+                }
+            } else {
+                Producto producto = detalle.getProducto();
+                producto.setStockActual(producto.getStockActual() + detalle.getCantidad());
+                productoRepository.save(producto);
+                MovimientoInventario movimiento = MovimientoInventario.builder()
+                        .producto(producto)
+                        .tipoMovimiento(MovimientoInventario.TipoMovimiento.ENTRADA)
+                        .cantidad(detalle.getCantidad())
+                        .motivo("Anulación de venta #" + venta.getNumeroVenta() + ". " + motivo)
+                        .usuario(usuario)
+                        .venta(venta)
+                        .build();
+                movimientoInventarioRepository.save(movimiento);
+            }
         }
 
         venta.setEstado(Venta.Estado.ANULADA);
@@ -307,7 +389,11 @@ public class VentaService {
     private DetalleVentaDTO toDetalleDto(DetalleVenta detalle) {
         DetalleVentaDTO dto = new DetalleVentaDTO();
         dto.setId(detalle.getId());
-        dto.setProducto(toProductoDto(detalle.getProducto()));
+        dto.setProducto(detalle.getProducto() != null ? toProductoDto(detalle.getProducto()) : null);
+        if (detalle.getPack() != null) {
+            dto.setPackId(detalle.getPack().getId());
+            dto.setPackNombre(detalle.getPack().getNombre());
+        }
         dto.setCantidad(detalle.getCantidad());
         dto.setPrecioUnitario(detalle.getPrecioUnitario());
         dto.setDescuento(detalle.getDescuento());

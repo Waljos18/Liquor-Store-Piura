@@ -1,0 +1,61 @@
+@startuml Vista_Logica_6_3_Diagrama_del_Negocio
+!theme plain
+title 6.3 Diagrama del Negocio\nVista Lógica - Chilalo Shot
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam defaultFontSize 10
+
+package "Trabajadores de Negocio" #E8F4FD {
+  [Cajero/Vendedor] as T1
+  [Administrador\nde inventario] as T2
+  [Responsable de\nfacturación] as T3
+  [Responsable de promociones\ny clientes] as T4
+  [Analista de negocio] as T5
+  [Motor de IA\n(recomendaciones y predicción)] as T6
+}
+
+package "Entidades de Negocio" #FEF9E7 {
+  [Producto] as E1
+  [Venta] as E2
+  [Cliente] as E3
+  [Promoción/Pack] as E4
+  [Comprobante\nelectrónico] as E5
+  [Movimiento de\ninventario] as E6
+}
+
+' Cajero/Vendedor: utiliza Producto, Promoción/Pack; crea Venta; asocia Cliente; dispara Comprobante y Movimiento
+T1 --> E1 : consulta
+T1 --> E4 : aplica
+T1 --> E2 : crea
+T1 --> E3 : asocia
+T1 ..> E5 : dispara
+T1 ..> E6 : dispara
+
+' Administrador de inventario
+T2 --> E1 : gestiona
+T2 --> E6 : gestiona
+
+' Responsable de facturación
+T3 --> E5 : gestiona
+
+' Responsable de promociones y clientes
+T4 --> E4 : gestiona
+T4 --> E3 : gestiona
+
+' Analista de negocio
+T5 --> E2 : consulta
+T5 --> E1 : consulta
+T5 --> E6 : consulta
+
+' Motor de IA
+T6 --> E2 : consume
+T6 --> E1 : consume
+T6 ..> E6 : consume
+T6 ..> E4 : sugiere
+
+' Relaciones entre entidades
+E2 --> E5 : genera
+E2 --> E6 : genera
+
+@enduml

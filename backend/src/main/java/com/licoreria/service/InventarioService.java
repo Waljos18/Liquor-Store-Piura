@@ -2,8 +2,14 @@ package com.licoreria.service;
 
 import com.licoreria.dto.ApiResponse;
 import com.licoreria.dto.ProductoDTO;
-import com.licoreria.entity.*;
+import com.licoreria.dto.inventario.StockEquivalenciaPacksDTO;
+import com.licoreria.entity.MovimientoInventario;
+import com.licoreria.entity.Pack;
+import com.licoreria.entity.PackProducto;
+import com.licoreria.entity.Producto;
+import com.licoreria.entity.Usuario;
 import com.licoreria.repository.MovimientoInventarioRepository;
+import com.licoreria.repository.PackRepository;
 import com.licoreria.repository.ProductoRepository;
 import com.licoreria.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +32,7 @@ public class InventarioService {
 
     private final MovimientoInventarioRepository movimientoRepository;
     private final ProductoRepository productoRepository;
+    private final PackRepository packRepository;
     private final UsuarioRepository usuarioRepository;
 
     public ApiResponse<Page<MovimientoInventario>> listarMovimientos(
@@ -105,6 +113,46 @@ public class InventarioService {
         return ApiResponse.ok(movimiento);
     }
 
+    /**
+     * Registra entrada de pack descomponiéndolo en unidades.
+     * El inventario se maneja siempre en unidades; el pack es agrupación comercial.
+     */
+    @Transactional
+    public ApiResponse<Void> registrarEntradaPack(Long packId, Integer cantidadPacks) {
+        Pack pack = packRepository.findById(packId)
+                .orElseThrow(() -> new RuntimeException("Pack no encontrado"));
+
+        if (!pack.getActivo()) {
+            return ApiResponse.error("INVALID", "El pack está inactivo");
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        String motivo = "Compra: " + cantidadPacks + " " + pack.getNombre();
+
+        for (PackProducto packProducto : pack.getProductos()) {
+            Producto producto = packProducto.getProducto();
+            int totalUnidades = cantidadPacks * packProducto.getCantidad();
+
+            producto.setStockActual(producto.getStockActual() + totalUnidades);
+            productoRepository.save(producto);
+
+            MovimientoInventario movimiento = MovimientoInventario.builder()
+                    .producto(producto)
+                    .tipoMovimiento(MovimientoInventario.TipoMovimiento.ENTRADA)
+                    .cantidad(totalUnidades)
+                    .motivo(motivo)
+                    .usuario(usuario)
+                    .build();
+            movimientoRepository.save(movimiento);
+        }
+
+        return ApiResponse.ok(null, "Entrada de pack registrada. Stock actualizado en unidades.");
+    }
+
     public ApiResponse<List<ProductoDTO>> obtenerProductosStockBajo() {
         List<Producto> productos = productoRepository.buscarConFiltros(
                 null, null, true, true, Pageable.unpaged()
@@ -132,6 +180,38 @@ public class InventarioService {
                 .collect(Collectors.toList());
 
         return ApiResponse.ok(productosDTO);
+    }
+
+    /**
+     * Stock en unidades y equivalencia en packs (cuántos packs completos se pueden armar).
+     */
+    public ApiResponse<StockEquivalenciaPacksDTO> obtenerStockEquivalenciaPacks(Long productoId) {
+        Producto producto = productoRepository.findById(productoId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        List<Pack> packs = packRepository.findPacksContainingProducto(productoId);
+        List<StockEquivalenciaPacksDTO.EquivalenciaPack> equivalencias = new ArrayList<>();
+        for (Pack pack : packs) {
+            int unidadesPorPack = pack.getProductos().stream()
+                    .filter(pp -> pp.getProducto().getId().equals(productoId))
+                    .mapToInt(PackProducto::getCantidad)
+                    .findFirst()
+                    .orElse(0);
+            if (unidadesPorPack > 0) {
+                int packsCompletos = producto.getStockActual() / unidadesPorPack;
+                equivalencias.add(new StockEquivalenciaPacksDTO.EquivalenciaPack(
+                        pack.getId(), pack.getNombre(), unidadesPorPack, packsCompletos));
+            }
+        }
+
+        StockEquivalenciaPacksDTO dto = StockEquivalenciaPacksDTO.builder()
+                .productoId(producto.getId())
+                .productoNombre(producto.getNombre())
+                .stockUnidades(producto.getStockActual())
+                .stockMinimo(producto.getStockMinimo())
+                .packsDisponibles(equivalencias)
+                .build();
+        return ApiResponse.ok(dto);
     }
 
     @Transactional

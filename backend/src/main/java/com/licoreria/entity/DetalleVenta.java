@@ -22,9 +22,15 @@ public class DetalleVenta {
     @JoinColumn(name = "venta_id", nullable = false)
     private Venta venta;
 
+    /** Producto cuando la línea es por unidad; null cuando la línea es por pack */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "producto_id", nullable = false)
+    @JoinColumn(name = "producto_id")
     private Producto producto;
+
+    /** Pack cuando la línea es venta de pack; null cuando la línea es producto suelto */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pack_id")
+    private Pack pack;
 
     @Column(nullable = false)
     private Integer cantidad;
