@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metodología Incremental - Presentación</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .presentation-container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .slide {
+            display: none;
+            padding: 60px;
+            min-height: 600px;
+        }
+        
+        .slide.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            border-bottom: 4px solid #764ba2;
+            padding-bottom: 15px;
+        }
+        
+        .slide h2 {
+            color: #764ba2;
+            font-size: 1.8em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .slide ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .slide li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        
+        .slide li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .advantages {
+            color: #2ecc71;
+        }
+        
+        .disadvantages {
+            color: #e74c3c;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 60px;
+            background: #f8f9fa;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .nav-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .slide-counter {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .card h3 {
+            color: #764ba2;
+            margin-bottom: 15px;
+        }
+        
+        .process-step {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .process-step strong {
+            color: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- Diapositiva 1 -->
+        <div class="slide active">
+            <h1>¿Qué es la Metodología Incremental?</h1>
+            
+            <div class="card">
+                <h2>Definición</h2>
+                <ul>
+                    <li><span class="highlight">Enfoque de desarrollo</span> que divide el proyecto en pequeñas partes funcionales llamadas <span class="highlight">incrementos</span></li>
+                    <li>Cada incremento añade nuevas funcionalidades al sistema</li>
+                    <li>El software evoluciona de manera <span class="highlight">progresiva</span> hasta alcanzar su versión completa</li>
+                </ul>
+            </div>
+            
+            <h2>Características Principales</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>✓ Desarrollo por Iteraciones</h3>
+                    <p>Ciclos repetitivos que producen versiones funcionales</p>
+                </div>
+                <div class="card">
+                    <h3>✓ Entrega Gradual</h3>
+                    <p>Funcionalidades entregadas progresivamente</p>
+                </div>
+                <div class="card">
+                    <h3>✓ Flexibilidad</h3>
+                    <p>Adaptación a cambios en requisitos</p>
+                </div>
+                <div class="card">
+                    <h3>✓ Reducción de Riesgos</h3>
+                    <p>Identificación y mitigación continua</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Diapositiva 2 -->
+        <div class="slide">
+            <h1>Ventajas y Desventajas</h1>
+            
+            <div class="grid">
+                <div class="card advantages">
+                    <h2>✅ Ventajas</h2>
+                    <ul>
+                        <li><strong>Participación activa del cliente</strong> durante todo el desarrollo</li>
+                        <li><strong>Entrega temprana</strong> de partes operativas del sistema</li>
+                        <li><strong>Adaptabilidad</strong> a cambios y necesidades emergentes</li>
+                        <li><strong>Detección temprana</strong> de errores (menor costo de corrección)</li>
+                        <li><strong>Valor inmediato</strong> desde las primeras etapas</li>
+                    </ul>
+                </div>
+                
+                <div class="card disadvantages">
+                    <h2>⚠️ Desventajas</h2>
+                    <ul>
+                        <li>Requiere <strong>planificación detallada</strong> y cuidadosa</li>
+                        <li><strong>No adecuada</strong> para sistemas de tiempo real o proyectos de alto riesgo</li>
+                        <li>Posible <strong>inconsistencia arquitectónica</strong> si no se gestiona bien</li>
+                        <li>Necesita <strong>integración cuidadosa</strong> de componentes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Diapositiva 3 -->
+        <div class="slide">
+            <h1>Cuándo Usar la Metodología Incremental</h1>
+            
+            <h2>Proyectos Ideales</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>📊 Sistemas Evolutivos</h3>
+                    <p>Requisitos que pueden cambiar durante el desarrollo</p>
+                </div>
+                <div class="card">
+                    <h3>👥 Cliente Participativo</h3>
+                    <p>Necesidad de ver progreso temprano</p>
+                </div>
+                <div class="card">
+                    <h3>🔄 Retroalimentación Continua</h3>
+                    <p>Sistemas que requieren ajustes constantes</p>
+                </div>
+                <div class="card">
+                    <h3>📈 Proyectos Medianos/Grandes</h3>
+                    <p>Con funcionalidades claramente definibles</p>
+                </div>
+            </div>
+            
+            <h2>Proceso Típico</h2>
+            <div class="process-step">
+                <strong>1. Planificación inicial</strong> del sistema completo
+            </div>
+            <div class="process-step">
+                <strong>2. División</strong> en incrementos funcionales
+            </div>
+            <div class="process-step">
+                <strong>3. Desarrollo iterativo</strong> de cada incremento
+            </div>
+            <div class="process-step">
+                <strong>4. Integración</strong> y pruebas continuas
+            </div>
+            <div class="process-step">
+                <strong>5. Entrega</strong> de versiones funcionales al cliente
+            </div>
+            <div class="process-step">
+                <strong>6. Refinamiento</strong> basado en retroalimentación
+            </div>
+        </div>
+        
+        <div class="navigation">
+            <button class="nav-button" id="prevBtn" onclick="changeSlide(-1)">← Anterior</button>
+            <span class="slide-counter">
+                <span id="currentSlide">1</span> / 3
+            </span>
+            <button class="nav-button" id="nextBtn" onclick="changeSlide(1)">Siguiente →</button>
+        </div>
+    </div>
+    
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+        
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+        
+        // Inicializar
+        showSlide(0);
+        
+        // Navegación con teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        });
+    </script>
+</body>
+</html>

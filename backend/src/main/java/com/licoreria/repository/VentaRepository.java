@@ -14,7 +14,7 @@ import java.util.Optional;
 @Repository
 public interface VentaRepository extends JpaRepository<Venta, Long> {
 
-    @Query("SELECT v FROM Venta v LEFT JOIN FETCH v.detalles d LEFT JOIN FETCH d.producto WHERE v.id = :id")
+    @Query("SELECT DISTINCT v FROM Venta v LEFT JOIN FETCH v.detalles d LEFT JOIN FETCH d.producto LEFT JOIN FETCH d.pack WHERE v.id = :id")
     Optional<Venta> findByIdWithDetalles(@Param("id") Long id);
 
     Optional<Venta> findByNumeroVenta(String numeroVenta);

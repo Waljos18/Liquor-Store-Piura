@@ -2,6 +2,8 @@ package com.licoreria.controller;
 
 import com.licoreria.dto.ApiResponse;
 import com.licoreria.dto.ProductoDTO;
+import com.licoreria.dto.inventario.EntradaPackRequest;
+import com.licoreria.dto.inventario.StockEquivalenciaPacksDTO;
 import com.licoreria.entity.MovimientoInventario;
 import com.licoreria.service.InventarioService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +15,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.List;
 
@@ -43,6 +46,15 @@ public class InventarioController {
             @PathVariable Long productoId
     ) {
         return ResponseEntity.ok(inventarioService.obtenerHistorialProducto(productoId));
+    }
+
+    @PostMapping("/entrada-pack")
+    @Operation(summary = "Registrar entrada de pack", description = "Descompone el pack en unidades y actualiza el stock. El inventario siempre se maneja en unidades.")
+    public ResponseEntity<ApiResponse<Void>> registrarEntradaPack(
+            @Valid @RequestBody EntradaPackRequest request
+    ) {
+        return ResponseEntity.ok(inventarioService.registrarEntradaPack(
+                request.getPackId(), request.getCantidadPacks()));
     }
 
     @PostMapping("/movimientos")
@@ -76,5 +88,13 @@ public class InventarioController {
             @RequestParam Integer stockFisico
     ) {
         return ResponseEntity.ok(inventarioService.ajustarInventario(productoId, stockFisico));
+    }
+
+    @GetMapping("/productos/{productoId}/stock-equivalencia-packs")
+    @Operation(summary = "Stock en unidades y equivalencia en packs", description = "Devuelve stock en unidades y cuántos packs completos se pueden armar para ese producto")
+    public ResponseEntity<ApiResponse<StockEquivalenciaPacksDTO>> obtenerStockEquivalenciaPacks(
+            @PathVariable Long productoId
+    ) {
+        return ResponseEntity.ok(inventarioService.obtenerStockEquivalenciaPacks(productoId));
     }
 }

@@ -1,0 +1,122 @@
+@startuml Realizacion_CUN_1_Realizar_venta_en_POS
+title 6.4 Diagrama de Realización de Negocio\nCUN: Realizar venta en POS
+
+left to right direction
+
+rectangle "Trabajadores" #E8F4FD {
+  [Cajero/Vendedor] as T1
+  [Motor de IA] as T6
+}
+
+rectangle "Entidades" #FEF9E7 {
+  [Producto] as E1
+  [Promoción/Pack] as E4
+  [Venta] as E2
+  [Cliente] as E3
+  [Comprobante electrónico] as E5
+  [Movimiento de inventario] as E6
+}
+
+T1 --> E1 : consulta
+T1 --> E4 : aplica
+T1 --> E2 : crea
+T1 --> E3 : asocia (opcional)
+T1 ..> E5 : emite (si aplica)
+T1 ..> E6 : genera
+T6 ..> E1 : recomienda productos
+
+E2 --> E5 : genera
+E2 --> E6 : genera
+
+@enduml
+
+@startuml Realizacion_CUN_2_Gestionar_inventario
+title 6.4 Diagrama de Realización de Negocio\nCUN: Gestionar inventario
+
+left to right direction
+
+rectangle "Trabajadores" #E8F4FD {
+  [Administrador de inventario] as T2
+  [Motor de IA] as T6
+}
+
+rectangle "Entidades" #FEF9E7 {
+  [Producto] as E1
+  [Movimiento de inventario] as E6
+}
+
+T2 --> E1 : crea/actualiza
+T2 --> E6 : registra movimientos
+T6 ..> E1 : predicción de demanda
+T6 ..> E6 : sugiere compras
+
+@enduml
+
+@startuml Realizacion_CUN_3_Emitir_comprobantes_electronicos
+title 6.4 Diagrama de Realización de Negocio\nCUN: Emitir comprobantes electrónicos
+
+left to right direction
+
+rectangle "Trabajadores" #E8F4FD {
+  [Responsable de facturación] as T3
+  [Cajero/Vendedor] as T1
+}
+
+rectangle "Entidades" #FEF9E7 {
+  [Venta] as E2
+  [Cliente] as E3
+  [Comprobante electrónico] as E5
+}
+
+T3 --> E5 : configura / gestiona
+T1 ..> E5 : dispara emisión desde venta
+E2 --> E5 : origen
+E3 --> E5 : datos fiscales
+
+@enduml
+
+@startuml Realizacion_CUN_4_Gestionar_promociones_y_clientes
+title 6.4 Diagrama de Realización de Negocio\nCUN: Gestionar promociones y packs / Gestionar clientes y fidelización
+
+left to right direction
+
+rectangle "Trabajadores" #E8F4FD {
+  [Responsable de promociones\ny clientes] as T4
+}
+
+rectangle "Entidades" #FEF9E7 {
+  [Promoción/Pack] as E4
+  [Cliente] as E3
+}
+
+T4 --> E4 : crea / modifica
+T4 --> E3 : registra / actualiza
+
+@enduml
+
+@startuml Realizacion_CUN_5_Consultar_reportes_y_IA
+title 6.4 Diagrama de Realización de Negocio\nCUN: Consultar reportes y analytics / Recomendaciones y predicciones IA
+
+left to right direction
+
+rectangle "Trabajadores" #E8F4FD {
+  [Analista de negocio] as T5
+  [Motor de IA] as T6
+}
+
+rectangle "Entidades" #FEF9E7 {
+  [Venta] as E2
+  [Producto] as E1
+  [Movimiento de inventario] as E6
+  [Promoción/Pack] as E4
+}
+
+T5 --> E2 : consulta reportes
+T5 --> E1 : consulta
+T5 --> E6 : consulta
+T6 --> E2 : analiza
+T6 --> E1 : analiza
+T6 --> E6 : analiza
+T6 ..> E4 : sugiere promociones
+
+@enduml

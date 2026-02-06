@@ -1,0 +1,70 @@
+@startuml
+title Diagrama de Casos de Uso de Negocio\n**Sistema Gestión Integral de Licorería - Chilalo Shot**
+
+top to bottom direction
+skinparam packageStyle rectangle
+skinparam useCase {
+  BackgroundColor #E8F4FD
+  BorderColor #2E86AB
+  FontSize 11
+}
+skinparam actor {
+  BackgroundColor #FEF9E7
+  BorderColor #F39C12
+}
+
+' ========== ACTORES (orden: internos, externos, sistema) ==========
+actor "Dueño/Administrador" as Admin
+actor "Vendedor/Empleado" as Vend
+actor "Cliente (externo)" as Cli #E8E8E8
+actor "SUNAT (externo)" as Sunat #E8E8E8
+actor "Sistema de IA (interno)" as IA #E8DAEF
+
+' ========== CASOS DE USO AGRUPADOS POR CATEGORÍA ==========
+rectangle "**Casos de Uso de Negocio - Chilalo Shot**" as SISTEMA #FFFFFF {
+
+  rectangle "Operaciones" as OPS #E3F2FD {
+    usecase (Realizar venta en POS) as UC1
+    usecase (Gestionar inventario) as UC2
+    usecase (Emitir comprobantes\nelectrónicos) as UC3
+  }
+
+  rectangle "Gestión comercial" as GES #FFF8E1 {
+    usecase (Gestionar promociones\ny packs) as UC4
+    usecase (Gestionar clientes\ny fidelización) as UC5
+  }
+
+  rectangle "Análisis e IA" as ANA #E8F5E9 {
+    usecase (Consultar reportes\ny analytics) as UC6
+    usecase (Obtener recomendaciones\ny predicciones de IA) as UC7
+  }
+}
+
+' ========== RELACIONES: Dueño/Administrador ==========
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+
+' ========== RELACIONES: Vendedor/Empleado ==========
+Vend --> UC1
+Vend --> UC5
+
+' ========== RELACIONES: Actores externos ==========
+Cli --> UC1
+Sunat --> UC3
+
+' ========== RELACIONES: Sistema de IA ==========
+IA --> UC1
+IA --> UC2
+IA --> UC4
+IA --> UC6
+IA --> UC7
+
+' ========== INCLUSIONES / EXTENSIONES ==========
+UC1 ..> UC4 : <<include>>
+UC1 ..> UC3 : <<extend>>
+UC6 ..> UC7 : <<include>>
+
+@enduml
