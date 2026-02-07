@@ -8,6 +8,9 @@ import { Products } from './pages/Products';
 import { Inventory } from './pages/Inventory';
 import { Promotions } from './pages/Promotions';
 import { Reports } from './pages/Reports';
+import { POS } from './pages/POS';
+import { Ventas } from './pages/Ventas';
+import { Settings } from './pages/Settings';
 
 function LoginRedirect() {
     const { isAuthenticated } = useAuth();
@@ -27,10 +30,13 @@ function AppRoutes() {
             }>
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
+                <Route path="pos" element={<POS />} />
                 <Route path="products" element={<Products />} />
                 <Route path="inventory" element={<Inventory />} />
                 <Route path="promotions" element={<Promotions />} />
                 <Route path="reports" element={<Reports />} />
+                <Route path="ventas" element={<Ventas />} />
+                <Route path="settings" element={<Settings />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

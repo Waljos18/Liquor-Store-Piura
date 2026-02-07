@@ -20,6 +20,7 @@ public class VentaDTO {
     private BigDecimal descuento;
     private BigDecimal impuesto;
     private BigDecimal total;
+    private BigDecimal vuelto;  // Para pago en efectivo
     private String formaPago;
     private String estado;
     private String observaciones;

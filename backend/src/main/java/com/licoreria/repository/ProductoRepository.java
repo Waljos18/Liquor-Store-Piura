@@ -14,6 +14,8 @@ import java.util.Optional;
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
+    List<Producto> findByActivoTrue();
+
     Optional<Producto> findByCodigoBarras(String codigoBarras);
 
     @Query("SELECT p FROM Producto p WHERE p.activo = true AND " +

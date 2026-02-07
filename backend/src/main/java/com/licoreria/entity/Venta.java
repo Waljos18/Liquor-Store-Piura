@@ -74,6 +74,6 @@ public class Venta {
         if (fecha == null) fecha = Instant.now();
     }
 
-    public enum FormaPago { EFECTIVO, TARJETA, TRANSFERENCIA, MIXTO }
+    public enum FormaPago { EFECTIVO, TARJETA, TRANSFERENCIA, YAPE, PLIN, MIXTO }
     public enum Estado { COMPLETADA, ANULADA, PENDIENTE }
 }

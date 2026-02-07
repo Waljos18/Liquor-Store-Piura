@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -22,6 +23,12 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
     Page<Venta> findByUsuarioId(Long usuarioId, Pageable pageable);
 
     Page<Venta> findByClienteId(Long clienteId, Pageable pageable);
+
+    @Query("SELECT DISTINCT v FROM Venta v LEFT JOIN FETCH v.detalles d LEFT JOIN FETCH d.producto LEFT JOIN FETCH d.pack WHERE v.fecha BETWEEN :fechaDesde AND :fechaHasta")
+    List<Venta> findByFechaBetweenWithDetalles(
+            @Param("fechaDesde") Instant fechaDesde,
+            @Param("fechaHasta") Instant fechaHasta
+    );
 
     @Query("SELECT v FROM Venta v WHERE v.fecha BETWEEN :fechaDesde AND :fechaHasta")
     Page<Venta> findByFechaBetween(
