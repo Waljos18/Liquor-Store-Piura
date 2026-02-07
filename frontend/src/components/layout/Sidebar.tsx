@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Beer, Package, Tag, BarChart } from 'lucide-react';
+import { LayoutDashboard, Beer, Package, Tag, BarChart, ShoppingCart, FileText, Settings } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface SidebarProps {
@@ -10,10 +10,13 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { label: 'Punto de Venta', path: '/pos', icon: ShoppingCart },
     { label: 'Productos', path: '/products', icon: Beer },
     { label: 'Inventario', path: '/inventory', icon: Package },
     { label: 'Promociones', path: '/promotions', icon: Tag },
     { label: 'Reportes', path: '/reports', icon: BarChart },
+    { label: 'Ventas', path: '/ventas', icon: FileText },
+    { label: 'Configuración', path: '/settings', icon: Settings },
 ];
 
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {

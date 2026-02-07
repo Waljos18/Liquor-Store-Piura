@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 public class VentaService {
 
     private final VentaRepository ventaRepository;
+    private final VentaPagoRepository ventaPagoRepository;
     private final ProductoRepository productoRepository;
     private final PackRepository packRepository;
     private final ClienteRepository clienteRepository;
@@ -152,6 +153,27 @@ public class VentaService {
                 .setScale(2, RoundingMode.HALF_UP);
         BigDecimal total = subtotalConDescuento.add(impuesto);
 
+        // Validar forma de pago (incluye YAPE, PLIN)
+        Venta.FormaPago formaPago;
+        try {
+            formaPago = Venta.FormaPago.valueOf(request.getFormaPago().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ApiResponse.error("INVALID", "Forma de pago no válida: " + request.getFormaPago());
+        }
+
+        // Validar MIXTO: suma de pagosMixtos debe igualar total
+        if (formaPago == Venta.FormaPago.MIXTO) {
+            if (request.getPagosMixtos() == null || request.getPagosMixtos().isEmpty()) {
+                return ApiResponse.error("INVALID", "Para pago mixto debe indicar el desglose de pagos");
+            }
+            BigDecimal sumaPagos = request.getPagosMixtos().stream()
+                    .map(p -> p.getMonto() != null ? p.getMonto() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (sumaPagos.compareTo(total) != 0) {
+                return ApiResponse.error("INVALID", "La suma de pagos mixtos (" + sumaPagos + ") no coincide con el total (" + total + ")");
+            }
+        }
+
         // Generar número de venta
         String numeroVenta = generarNumeroVenta();
 
@@ -165,7 +187,7 @@ public class VentaService {
                 .descuento(descuento)
                 .impuesto(impuesto)
                 .total(total)
-                .formaPago(Venta.FormaPago.valueOf(request.getFormaPago()))
+                .formaPago(formaPago)
                 .estado(Venta.Estado.COMPLETADA)
                 .observaciones(request.getObservaciones())
                 .build();
@@ -216,7 +238,29 @@ public class VentaService {
             }
         }
 
-        return ApiResponse.ok(toDto(venta));
+        // Guardar pagos mixtos si aplica
+        if (formaPago == Venta.FormaPago.MIXTO) {
+            for (CrearVentaRequest.PagoMixto pm : request.getPagosMixtos()) {
+                VentaPago vp = VentaPago.builder()
+                        .venta(venta)
+                        .metodoPago(VentaPago.MetodoPago.valueOf(pm.getMetodo().toUpperCase()))
+                        .monto(pm.getMonto())
+                        .referencia(pm.getReferencia())
+                        .build();
+                ventaPagoRepository.save(vp);
+            }
+        }
+
+        // Calcular vuelto para respuesta (solo EFECTIVO)
+        BigDecimal vuelto = BigDecimal.ZERO;
+        if (formaPago == Venta.FormaPago.EFECTIVO && request.getMontoRecibido() != null
+                && request.getMontoRecibido().compareTo(total) >= 0) {
+            vuelto = request.getMontoRecibido().subtract(total).setScale(2, RoundingMode.HALF_UP);
+        }
+
+        VentaDTO dto = toDto(venta);
+        dto.setVuelto(vuelto.compareTo(BigDecimal.ZERO) > 0 ? vuelto : null);
+        return ApiResponse.ok(dto);
     }
 
     private BigDecimal calcularDescuento(Producto producto, Integer cantidad, BigDecimal precioUnitario) {

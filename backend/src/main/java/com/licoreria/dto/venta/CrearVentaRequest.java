@@ -18,11 +18,27 @@ public class CrearVentaRequest {
     private List<ItemVenta> items;
 
     @NotNull(message = "Forma de pago es requerida")
-    private String formaPago; // EFECTIVO, TARJETA, TRANSFERENCIA, MIXTO
+    private String formaPago; // EFECTIVO, TARJETA, TRANSFERENCIA, YAPE, PLIN, MIXTO
+
+    /** Monto recibido en efectivo (para EFECTIVO). Usado para calcular vuelto */
+    private BigDecimal montoRecibido;
+
+    /** Desglose de pagos para forma MIXTO. Suma debe igualar al total */
+    private List<PagoMixto> pagosMixtos;
 
     private BigDecimal descuento;
 
     private String observaciones;
+
+    /** Referencia de operación para YAPE/PLIN (opcional) */
+    private String referencia;
+
+    @Data
+    public static class PagoMixto {
+        private String metodo; // EFECTIVO, TARJETA, YAPE, PLIN, TRANSFERENCIA
+        private BigDecimal monto;
+        private String referencia;
+    }
 
     @Data
     public static class ItemVenta {
