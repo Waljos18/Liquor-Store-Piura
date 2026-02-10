@@ -46,6 +46,8 @@ export const POS = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const [showClienteSearch, setShowClienteSearch] = useState(false);
+  const clienteSearchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
   const impuesto = subtotal * IGV;
@@ -66,6 +68,22 @@ export const POS = () => {
     const t = setTimeout(loadProductos, 200);
     return () => clearTimeout(t);
   }, [loadProductos]);
+
+  useEffect(() => {
+    if (clienteSearch.length < 2) {
+      setClientes([]);
+      return;
+    }
+    if (clienteSearchDebounce.current) clearTimeout(clienteSearchDebounce.current);
+    clienteSearchDebounce.current = setTimeout(async () => {
+      const res = await fetchClientes(clienteSearch);
+      if (res.success && res.data?.content) setClientes(res.data.content);
+      else setClientes([]);
+    }, 250);
+    return () => {
+      if (clienteSearchDebounce.current) clearTimeout(clienteSearchDebounce.current);
+    };
+  }, [clienteSearch]);
 
   const addToCart = (p: ProductoDTO) => {
     if (p.stockActual < 1) {
@@ -255,6 +273,66 @@ export const POS = () => {
 
             {!resultado && (
               <>
+                <div>
+                  <p className="text-sm font-medium mb-2">Cliente (opcional)</p>
+                  {!cliente ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setShowClienteSearch(true)}
+                        className="w-full text-left px-3 py-2 border border-border rounded text-text-secondary text-sm"
+                      >
+                        Buscar cliente...
+                      </button>
+                      {showClienteSearch && (
+                        <div className="mt-2 space-y-2">
+                          <input
+                            type="text"
+                            placeholder="Nombre o documento..."
+                            value={clienteSearch}
+                            onChange={(e) => setClienteSearch(e.target.value)}
+                            className="w-full px-3 py-2 border border-border rounded text-sm"
+                            autoFocus
+                          />
+                          {clientes.length > 0 && (
+                            <ul className="border border-border rounded max-h-32 overflow-y-auto">
+                              {clientes.map((c) => (
+                                <li key={c.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCliente(c);
+                                      setClienteSearch('');
+                                      setClientes([]);
+                                      setShowClienteSearch(false);
+                                    }}
+                                    className="w-full text-left px-3 py-2 hover:bg-background text-sm"
+                                  >
+                                    {c.nombre} {c.numeroDocumento ? `(${c.numeroDocumento})` : ''}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          <Button variant="outline" size="sm" onClick={() => { setShowClienteSearch(false); setClienteSearch(''); setClientes([]); }}>
+                            Cerrar
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex justify-between items-center px-3 py-2 border border-border rounded bg-background">
+                      <span className="text-sm">{cliente.nombre}</span>
+                      <button
+                        type="button"
+                        onClick={() => setCliente(null)}
+                        className="text-text-secondary hover:text-primary text-sm"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div>
                   <p className="text-sm font-medium mb-2">Forma de pago</p>
                   <div className="flex flex-wrap gap-2">

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Settings as SettingsIcon, Printer, Tag, Users, Package, Truck, CreditCard, User, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -20,10 +21,26 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'impresoras', label: 'Impresoras', icon: Printer },
 ];
 
+const VALID_TABS: TabId[] = ['categorias', 'clientes', 'productos', 'proveedores', 'metodos-pago', 'usuarios', 'recibos', 'impresoras'];
+
 export const Settings = () => {
   const { user } = useAuth();
   const isAdmin = user?.rol === 'ADMIN';
-  const [tab, setTab] = useState<TabId>('categorias');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabId | null;
+  const initialTab: TabId = tabParam && VALID_TABS.includes(tabParam) ? tabParam : 'categorias';
+  const [tab, setTab] = useState<TabId>(initialTab);
+
+  useEffect(() => {
+    if (tabParam && VALID_TABS.includes(tabParam) && tab !== tabParam) {
+      setTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const setTabAndUrl = (newTab: TabId) => {
+    setTab(newTab);
+    setSearchParams(newTab === 'categorias' ? {} : { tab: newTab }, { replace: true });
+  };
 
   if (!isAdmin) {
     return (
@@ -51,7 +68,7 @@ export const Settings = () => {
               {TABS.map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => setTab(t.id)}
+                  onClick={() => setTabAndUrl(t.id)}
                   className={`flex items-center gap-2 px-3 py-2 rounded text-left ${
                     tab === t.id ? 'bg-primary text-white' : 'hover:bg-background'
                   }`}
