@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Beer, Package, Tag, BarChart, ShoppingCart, FileText, Settings } from 'lucide-react';
+import { LayoutDashboard, Beer, Package, Tag, BarChart, ShoppingCart, FileText, Settings, Truck } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface SidebarProps {
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
     { label: 'Promociones', path: '/promotions', icon: Tag },
     { label: 'Reportes', path: '/reports', icon: BarChart },
     { label: 'Ventas', path: '/ventas', icon: FileText },
+    { label: 'Proveedores', path: '/settings?tab=proveedores', icon: Truck },
     { label: 'Configuración', path: '/settings', icon: Settings },
 ];
 
@@ -39,7 +40,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                             className={({ isActive }) =>
                                 clsx('sidebar-link', isActive && 'active')
                             }
-                            onClick={onClose} // Auto close on mobile nav
+                            onClick={onClose}
                         >
                             <item.icon size={20} />
                             <span>{item.label}</span>

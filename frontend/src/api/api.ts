@@ -8,6 +8,16 @@ export interface ApiResponse<T> {
   error?: { code: string; message: string };
 }
 
+async function parseJsonSafe<T>(res: Response): Promise<T | null> {
+  const text = await res.text();
+  if (!text || text.trim() === '') return null;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
@@ -19,11 +29,26 @@ async function request<T>(
     ...(options.headers as Record<string, string>),
   };
   const res = await fetch(url, { ...options, headers });
-  const json = await res.json();
+  const json = await parseJsonSafe<ApiResponse<T>>(res);
+
   if (!res.ok) {
-    return { success: false, error: json.error || { code: 'ERROR', message: 'Error en la solicitud' } };
+    if (res.status === 401 || res.status === 403) {
+      window.dispatchEvent(new CustomEvent('auth:session-invalid'));
+    }
+    const message =
+      res.status === 403
+        ? 'Acceso denegado. Inicia sesión nuevamente.'
+        : res.status === 401
+          ? 'Sesión expirada. Inicia sesión nuevamente.'
+          : json?.error?.message ?? 'Error en la solicitud';
+    return {
+      success: false,
+      error: json?.error ?? { code: 'ERROR', message },
+    };
   }
-  return json;
+
+  if (json) return json;
+  return { success: false, error: { code: 'ERROR', message: 'Respuesta inválida del servidor' } };
 }
 
 async function requestBlob(path: string): Promise<Blob> {
@@ -146,6 +171,22 @@ export async function fetchProductos(params?: {
 export async function buscarProductos(q: string): Promise<ApiResponse<ProductoDTO[]>> {
   if (!q || q.length < 2) return { success: true, data: [] };
   return request<ProductoDTO[]>(`/api/v1/productos/buscar?q=${encodeURIComponent(q)}`);
+}
+
+export async function obtenerProducto(id: number): Promise<ApiResponse<ProductoDTO>> {
+  return request<ProductoDTO>(`/api/v1/productos/${id}`);
+}
+
+export async function crearProducto(dto: Partial<ProductoDTO>): Promise<ApiResponse<ProductoDTO>> {
+  return request<ProductoDTO>('/api/v1/productos', { method: 'POST', body: JSON.stringify(dto) });
+}
+
+export async function actualizarProducto(id: number, dto: Partial<ProductoDTO>): Promise<ApiResponse<ProductoDTO>> {
+  return request<ProductoDTO>(`/api/v1/productos/${id}`, { method: 'PUT', body: JSON.stringify(dto) });
+}
+
+export async function eliminarProducto(id: number): Promise<ApiResponse<void>> {
+  return request<void>(`/api/v1/productos/${id}`, { method: 'DELETE' });
 }
 
 // Ventas
@@ -296,4 +337,55 @@ export async function actualizarProveedor(id: number, dto: Partial<ProveedorDTO>
 
 export async function eliminarProveedor(id: number): Promise<ApiResponse<void>> {
   return request<void>(`/api/v1/proveedores/${id}`, { method: 'DELETE' });
+}
+
+// Promociones
+export interface PromocionProductoDTO {
+  id?: number;
+  producto?: ProductoDTO;
+  cantidadMinima: number;
+  cantidadGratis?: number;
+}
+
+export interface PromocionDTO {
+  id: number;
+  nombre: string;
+  tipo: string;
+  descuentoPorcentaje?: number;
+  descuentoMonto?: number;
+  fechaInicio: string;
+  fechaFin: string;
+  activa: boolean;
+  productos?: PromocionProductoDTO[];
+}
+
+export interface CrearPromocionRequest {
+  nombre: string;
+  tipo: string;
+  descuentoPorcentaje?: number;
+  descuentoMonto?: number;
+  fechaInicio: string;
+  fechaFin: string;
+  productos?: { productoId: number; cantidadMinima?: number; cantidadGratis?: number }[];
+}
+
+export async function fetchPromociones(params?: { soloActivas?: boolean; page?: number; size?: number }): Promise<ApiResponse<{ content: PromocionDTO[]; totalElements: number }>> {
+  const q = new URLSearchParams();
+  if (params?.soloActivas != null) q.set('soloActivas', String(params.soloActivas));
+  if (params?.page != null) q.set('page', String(params.page));
+  if (params?.size != null) q.set('size', String(params.size));
+  const path = `/api/v1/promociones${q.toString() ? '?' + q : ''}`;
+  return request<{ content: PromocionDTO[]; totalElements: number }>(path);
+}
+
+export async function crearPromocion(body: CrearPromocionRequest): Promise<ApiResponse<PromocionDTO>> {
+  return request<PromocionDTO>('/api/v1/promociones', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function actualizarPromocion(id: number, body: CrearPromocionRequest): Promise<ApiResponse<PromocionDTO>> {
+  return request<PromocionDTO>(`/api/v1/promociones/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+}
+
+export async function desactivarPromocion(id: number): Promise<ApiResponse<void>> {
+  return request<void>(`/api/v1/promociones/${id}`, { method: 'DELETE' });
 }
