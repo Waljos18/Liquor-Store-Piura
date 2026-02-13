@@ -1,0 +1,25 @@
+@startuml
+title Facturación Electrónica - Casos de Uso
+
+left to right direction
+skinparam useCase {
+  BackgroundColor #FCE4EC
+  BorderColor #C2185B
+}
+
+rectangle "Facturación Electrónica" #FCE4EC {
+  usecase (Emitir boleta electrónica) as UC_Boleta
+  usecase (Emitir factura electrónica) as UC_Factura
+  usecase (Enviar a SUNAT) as UC_SUNAT
+}
+
+actor "Vendedor" as Vend
+actor "SUNAT" as Sunat
+
+Vend --> UC_Boleta
+Vend --> UC_Factura
+UC_Boleta --> UC_SUNAT
+UC_Factura --> UC_SUNAT
+Sunat --> UC_SUNAT
+
+@enduml

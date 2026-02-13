@@ -24,17 +24,20 @@ public class ProductoService {
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
 
+    @Transactional(readOnly = true)
     public ApiResponse<Page<ProductoDTO>> listar(String search, Long categoriaId, Boolean activo, Boolean stockBajo, Pageable pageable) {
         Page<Producto> page = productoRepository.buscarConFiltros(search, categoriaId, activo, stockBajo, pageable);
         return ApiResponse.ok(page.map(this::toDto));
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<ProductoDTO> obtenerPorId(Long id) {
         return productoRepository.findById(id)
                 .map(p -> ApiResponse.ok(toDto(p)))
                 .orElse(ApiResponse.error("NOT_FOUND", "Producto no encontrado"));
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<List<ProductoDTO>> buscarParaPos(String q) {
         if (q == null || q.isBlank()) {
             return ApiResponse.ok(List.of());

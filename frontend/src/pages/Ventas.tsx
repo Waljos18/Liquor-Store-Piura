@@ -20,6 +20,7 @@ export const Ventas = () => {
   const isAdmin = user?.rol === 'ADMIN';
   const [ventas, setVentas] = useState<VentaDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [anulando, setAnulando] = useState<number | null>(null);
 
   useEffect(() => {
@@ -28,11 +29,18 @@ export const Ventas = () => {
 
   const loadVentas = async () => {
     setLoading(true);
+    setError(null);
     const hoy = new Date();
-    const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 19) + 'Z';
-    const fin = hoy.toISOString().slice(0, 19) + 'Z';
-    const res = await fetchVentas({ fechaDesde: inicio, fechaFin: fin, size: 100 });
-    if (res.success && res.data?.content) setVentas(res.data.content);
+    const hace90 = new Date(hoy);
+    hace90.setDate(hace90.getDate() - 90);
+    const fechaDesde = hace90.toISOString().slice(0, 19) + 'Z';
+    const fechaHasta = hoy.toISOString().slice(0, 19) + 'Z';
+    const res = await fetchVentas({ fechaDesde, fechaHasta, size: 100 });
+    if (res.success && res.data) {
+      setVentas(res.data.content ?? []);
+    } else if (!res.success) {
+      setError(res.error?.message ?? 'Error al cargar ventas');
+    }
     setLoading(false);
   };
 
@@ -55,7 +63,10 @@ export const Ventas = () => {
           <CardTitle>Listado de ventas</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {error && (
+              <p className="text-red-600 text-sm mb-4">{error}</p>
+            )}
+            {loading ? (
             <p className="text-text-secondary">Cargando...</p>
           ) : (
             <div className="overflow-x-auto">
