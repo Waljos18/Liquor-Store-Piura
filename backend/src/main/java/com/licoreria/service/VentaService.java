@@ -310,6 +310,7 @@ public class VentaService {
         return "V-" + fecha + "-" + String.format("%05d", count + 1);
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<Page<VentaDTO>> listar(
             Instant fechaDesde, 
             Instant fechaHasta, 

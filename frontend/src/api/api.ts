@@ -221,6 +221,7 @@ export interface VentaDTO {
   vuelto?: number;
   formaPago: string;
   estado: string;
+  cliente?: { id: number; nombre: string; numeroDocumento?: string };
   detalles?: { producto?: ProductoDTO; packNombre?: string; cantidad: number; precioUnitario: number; subtotal: number }[];
 }
 
@@ -233,13 +234,13 @@ export async function crearVenta(body: CrearVentaRequest): Promise<ApiResponse<V
 
 export async function fetchVentas(params?: {
   fechaDesde?: string;
-  fechaFin?: string;
+  fechaHasta?: string;
   page?: number;
   size?: number;
 }): Promise<ApiResponse<{ content: VentaDTO[]; totalElements: number }>> {
   const q = new URLSearchParams();
   if (params?.fechaDesde) q.set('fechaDesde', params.fechaDesde);
-  if (params?.fechaFin) q.set('fechaFin', params.fechaFin);
+  if (params?.fechaHasta) q.set('fechaHasta', params.fechaHasta);
   if (params?.page != null) q.set('page', String(params.page));
   if (params?.size != null) q.set('size', String(params.size));
   return request<{ content: VentaDTO[]; totalElements: number }>(`/api/v1/ventas?${q}`);
@@ -257,6 +258,93 @@ export async function fetchStockBajo(): Promise<ApiResponse<ProductoDTO[]>> {
 
 export async function fetchProximosVencer(): Promise<ApiResponse<ProductoDTO[]>> {
   return request<ProductoDTO[]>('/api/v1/inventario/alertas/vencimiento');
+}
+
+export interface MovimientoInventarioDTO {
+  id: number;
+  producto?: { id: number; nombre: string };
+  tipoMovimiento: string;
+  cantidad: number;
+  motivo?: string;
+  usuario?: { nombre?: string; username?: string };
+  fecha: string;
+}
+
+export async function fetchMovimientosInventario(params?: {
+  productoId?: number;
+  tipoMovimiento?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  page?: number;
+  size?: number;
+}): Promise<ApiResponse<{ content: MovimientoInventarioDTO[]; totalElements: number }>> {
+  const q = new URLSearchParams();
+  if (params?.productoId) q.set('productoId', String(params.productoId));
+  if (params?.tipoMovimiento) q.set('tipoMovimiento', params.tipoMovimiento);
+  if (params?.fechaDesde) q.set('fechaDesde', params.fechaDesde);
+  if (params?.fechaHasta) q.set('fechaHasta', params.fechaHasta);
+  if (params?.page != null) q.set('page', String(params.page));
+  if (params?.size != null) q.set('size', String(params.size));
+  return request<{ content: MovimientoInventarioDTO[]; totalElements: number }>(
+    `/api/v1/inventario/movimientos?${q}`
+  );
+}
+
+export async function crearMovimientoManual(
+  productoId: number,
+  tipoMovimiento: string,
+  cantidad: number,
+  motivo?: string
+): Promise<ApiResponse<MovimientoInventarioDTO>> {
+  const q = new URLSearchParams({
+    productoId: String(productoId),
+    tipoMovimiento,
+    cantidad: String(cantidad),
+  });
+  if (motivo) q.set('motivo', motivo);
+  return request<MovimientoInventarioDTO>(`/api/v1/inventario/movimientos?${q}`, {
+    method: 'POST',
+  });
+}
+
+export async function ajustarInventario(
+  productoId: number,
+  stockFisico: number
+): Promise<ApiResponse<void>> {
+  const q = new URLSearchParams({
+    productoId: String(productoId),
+    stockFisico: String(stockFisico),
+  });
+  return request<void>(`/api/v1/inventario/ajustar?${q}`, { method: 'POST' });
+}
+
+// Compras
+export interface CrearCompraItem {
+  productoId: number;
+  cantidad: number;
+  precioUnitario: number;
+}
+
+export interface CrearCompraRequest {
+  proveedorId: number;
+  fechaCompra?: string;
+  items: CrearCompraItem[];
+  observaciones?: string;
+}
+
+export interface CompraDTO {
+  id: number;
+  numeroCompra: string;
+  fechaCompra: string;
+  total: number;
+  estado: string;
+}
+
+export async function crearCompra(body: CrearCompraRequest): Promise<ApiResponse<CompraDTO>> {
+  return request<CompraDTO>('/api/v1/compras', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 }
 
 // Categorías
