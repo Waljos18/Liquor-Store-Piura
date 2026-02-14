@@ -1,6 +1,7 @@
 package com.licoreria.controller;
 
 import com.licoreria.dto.ApiResponse;
+import com.licoreria.dto.facturacion.ComprobanteDTO;
 import com.licoreria.dto.facturacion.EmitirBoletaRequest;
 import com.licoreria.dto.facturacion.EmitirFacturaRequest;
 import com.licoreria.entity.ComprobanteElectronico;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/facturacion")
@@ -53,6 +55,16 @@ public class FacturacionController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("NOT_FOUND", e.getMessage()));
         }
+    }
+
+    @GetMapping("/comprobantes/por-venta/{ventaId}")
+    @Operation(summary = "Obtener comprobante asociado a una venta")
+    public ResponseEntity<ApiResponse<ComprobanteDTO>> comprobantePorVenta(@PathVariable Long ventaId) {
+        Optional<ComprobanteDTO> comp = facturacionService.obtenerComprobantePorVentaId(ventaId);
+        if (comp.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("NOT_FOUND", "No hay comprobante para esta venta"));
+        }
+        return ResponseEntity.ok(ApiResponse.ok(comp.get()));
     }
 
     @GetMapping("/comprobantes/{id}/pdf")

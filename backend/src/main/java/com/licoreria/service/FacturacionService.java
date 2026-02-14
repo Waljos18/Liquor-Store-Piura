@@ -1,5 +1,6 @@
 package com.licoreria.service;
 
+import com.licoreria.dto.facturacion.ComprobanteDTO;
 import com.licoreria.entity.*;
 import com.licoreria.repository.ClienteRepository;
 import com.licoreria.repository.ComprobanteElectronicoRepository;
@@ -21,6 +22,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Servicio de facturación electrónica.
@@ -214,5 +216,23 @@ public class FacturacionService {
         return comprobanteRepository.findById(comprobanteId)
                 .map(ComprobanteElectronico::getXmlEnviado)
                 .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ComprobanteDTO> obtenerComprobantePorVentaId(Long ventaId) {
+        return comprobanteRepository.findByVenta_Id(ventaId)
+                .map(this::toComprobanteDTO);
+    }
+
+    private ComprobanteDTO toComprobanteDTO(ComprobanteElectronico c) {
+        return ComprobanteDTO.builder()
+                .id(c.getId())
+                .ventaId(c.getVenta() != null ? c.getVenta().getId() : null)
+                .tipoComprobante(c.getTipoComprobante() != null ? c.getTipoComprobante().name() : null)
+                .serie(c.getSerie())
+                .numero(c.getNumero())
+                .estadoSunat(c.getEstadoSunat() != null ? c.getEstadoSunat().name() : null)
+                .fechaEmision(c.getFechaEmision())
+                .build();
     }
 }
