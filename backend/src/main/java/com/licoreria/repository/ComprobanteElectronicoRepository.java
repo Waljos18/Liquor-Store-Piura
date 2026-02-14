@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface ComprobanteElectronicoRepository extends JpaRepository<ComprobanteElectronico, Long> {
 
-    Optional<ComprobanteElectronico> findByVentaId(Long ventaId);
+    Optional<ComprobanteElectronico> findByVenta_Id(Long ventaId);
 
     @Query(value = "SELECT COALESCE(MAX(CAST(numero AS INTEGER)), 0) + 1 FROM comprobantes_electronicos WHERE serie = :serie", nativeQuery = true)
     long siguienteNumeroPorSerie(@Param("serie") String serie);

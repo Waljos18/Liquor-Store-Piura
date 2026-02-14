@@ -189,6 +189,35 @@ export async function eliminarProducto(id: number): Promise<ApiResponse<void>> {
   return request<void>(`/api/v1/productos/${id}`, { method: 'DELETE' });
 }
 
+export interface ImportarProductosResult {
+  totalProcesados: number;
+  creados: number;
+  omitidos: number;
+  errores: number;
+  mensajesError: string[];
+  productosCreados: string[];
+}
+
+export async function importarProductosCSV(archivo: File): Promise<ApiResponse<ImportarProductosResult>> {
+  const formData = new FormData();
+  formData.append('archivo', archivo);
+  const url = `${API_BASE}/api/v1/productos/importar`;
+  const headers = getAuthHeaders();
+  const res = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+  const json = await parseJsonSafe<ApiResponse<ImportarProductosResult>>(res);
+  if (!res.ok) {
+    return {
+      success: false,
+      error: json?.error ?? { code: 'ERROR', message: 'Error al importar productos' },
+    };
+  }
+  return json ?? { success: false, error: { code: 'ERROR', message: 'Respuesta inválida' } };
+}
+
 // Ventas
 export interface CrearVentaItem {
   productoId?: number;
@@ -249,6 +278,66 @@ export async function fetchVentas(params?: {
 export async function anularVenta(id: number, motivo?: string): Promise<ApiResponse<VentaDTO>> {
   const q = motivo ? `?motivo=${encodeURIComponent(motivo)}` : '';
   return request<VentaDTO>(`/api/v1/ventas/${id}/anular${q}`, { method: 'PUT' });
+}
+
+// Facturación / Comprobantes
+export interface ComprobanteDTO {
+  id: number;
+  ventaId: number;
+  tipoComprobante: string;
+  serie: string;
+  numero: string;
+  estadoSunat: string;
+  fechaEmision: string;
+}
+
+export interface EmitirBoletaRequest {
+  ventaId: number;
+  tipoDocumento: string;
+  numeroDocumento: string;
+  nombre: string;
+}
+
+export interface EmitirFacturaRequest {
+  ventaId: number;
+  numeroDocumento: string; // RUC
+  razonSocial: string;
+}
+
+export async function fetchComprobantePorVenta(ventaId: number): Promise<ApiResponse<ComprobanteDTO>> {
+  return request<ComprobanteDTO>(`/api/v1/facturacion/comprobantes/por-venta/${ventaId}`);
+}
+
+export async function emitirBoleta(body: EmitirBoletaRequest): Promise<ApiResponse<{ id: number; serie: string; numero: string; estadoSunat: string }>> {
+  return request<{ id: number; serie: string; numero: string; estadoSunat: string }>('/api/v1/facturacion/emitir-boleta', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function emitirFactura(body: EmitirFacturaRequest): Promise<ApiResponse<{ id: number; serie: string; numero: string; estadoSunat: string }>> {
+  return request<{ id: number; serie: string; numero: string; estadoSunat: string }>('/api/v1/facturacion/emitir-factura', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export async function descargarPdfComprobante(comprobanteId: number): Promise<void> {
+  const blob = await requestBlob(`/api/v1/facturacion/comprobantes/${comprobanteId}/pdf`);
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `comprobante-${comprobanteId}.pdf`;
+  link.click();
+  window.URL.revokeObjectURL(url);
+}
+
+export async function enviarComprobanteSunat(comprobanteId: number): Promise<ApiResponse<Record<string, unknown>>> {
+  return request<Record<string, unknown>>(`/api/v1/facturacion/comprobantes/${comprobanteId}/enviar`, { method: 'POST' });
+}
+
+export async function consultarEstadoSunat(comprobanteId: number): Promise<ApiResponse<Record<string, unknown>>> {
+  return request<Record<string, unknown>>(`/api/v1/facturacion/comprobantes/${comprobanteId}/consultar`);
 }
 
 // Inventario

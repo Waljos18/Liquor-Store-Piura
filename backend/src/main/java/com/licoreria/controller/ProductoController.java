@@ -1,6 +1,7 @@
 package com.licoreria.controller;
 
 import com.licoreria.dto.ApiResponse;
+import com.licoreria.dto.ImportarProductosResultDTO;
 import com.licoreria.dto.ProductoDTO;
 import com.licoreria.service.ProductoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,7 +13,10 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -46,6 +50,25 @@ public class ProductoController {
         ApiResponse<ProductoDTO> res = productoService.obtenerPorId(id);
         if (!res.isSuccess()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
         return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/importar")
+    @Operation(summary = "Importar productos desde archivo CSV")
+    public ResponseEntity<ApiResponse<ImportarProductosResultDTO>> importar(
+            @RequestParam("archivo") MultipartFile archivo) {
+        try {
+            String csvContent = new String(archivo.getBytes(), StandardCharsets.UTF_8);
+            return ResponseEntity.ok(productoService.importarDesdeCsv(csvContent));
+        } catch (IOException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("ERROR", "No se pudo leer el archivo: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/importar/texto")
+    @Operation(summary = "Importar productos desde contenido CSV (texto)")
+    public ResponseEntity<ApiResponse<ImportarProductosResultDTO>> importarTexto(@RequestBody String csvContent) {
+        return ResponseEntity.ok(productoService.importarDesdeCsv(csvContent));
     }
 
     @PostMapping

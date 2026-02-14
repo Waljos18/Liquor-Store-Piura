@@ -2,15 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Upload } from 'lucide-react';
 import {
   fetchProductos,
   fetchCategorias,
   crearProducto,
   actualizarProducto,
   eliminarProducto,
+  importarProductosCSV,
   type ProductoDTO,
   type CategoriaDTO,
+  type ImportarProductosResult,
 } from '../api/api';
 
 const emptyForm = {
@@ -42,6 +44,8 @@ export const Products = () => {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [importando, setImportando] = useState(false);
+  const [resultadoImportacion, setResultadoImportacion] = useState<ImportarProductosResult | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -144,6 +148,30 @@ export const Products = () => {
     else alert(res.error?.message ?? 'Error al eliminar');
   };
 
+  const importarRef = React.useRef<HTMLInputElement>(null);
+  const importarDesdeArchivo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setImportando(true);
+    setResultadoImportacion(null);
+    const res = await importarProductosCSV(file);
+    setImportando(false);
+    if (res.success && res.data) {
+      setResultadoImportacion(res.data);
+      load();
+    } else {
+      setResultadoImportacion({
+        totalProcesados: 0,
+        creados: 0,
+        omitidos: 0,
+        errores: 1,
+        mensajesError: [res.error?.message ?? 'Error al importar'],
+        productosCreados: [],
+      });
+    }
+  };
+
   const totalPages = Math.max(1, Math.ceil(totalElements / size));
 
   return (
@@ -171,6 +199,21 @@ export const Products = () => {
               <option key={c.id} value={c.id}>{c.nombre}</option>
             ))}
           </select>
+          <input
+            ref={importarRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={importarDesdeArchivo}
+          />
+          <Button
+            variant="outline"
+            onClick={() => importarRef.current?.click()}
+            disabled={importando}
+          >
+            <Upload size={18} className="mr-2" />
+            {importando ? 'Importando...' : 'Importar CSV'}
+          </Button>
           <Button onClick={openNew}>
             <Plus size={18} className="mr-2" />
             Nuevo Producto
@@ -362,6 +405,58 @@ export const Products = () => {
               <Button onClick={save} disabled={saving}>
                 {saving ? 'Guardando...' : 'Guardar'}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Resultado Importación */}
+      {resultadoImportacion != null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface border border-border rounded-lg shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-border font-bold flex justify-between items-center">
+              <span>Resultado de la importación</span>
+              <Button variant="ghost" size="sm" onClick={() => setResultadoImportacion(null)}>Cerrar</Button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1 space-y-4">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <span className="text-text-secondary">Total procesados</span>
+                <span className="font-medium">{resultadoImportacion.totalProcesados}</span>
+                <span className="text-text-secondary">Creados</span>
+                <span className="font-medium text-green-600">{resultadoImportacion.creados}</span>
+                <span className="text-text-secondary">Omitidos</span>
+                <span className="font-medium">{resultadoImportacion.omitidos}</span>
+                <span className="text-text-secondary">Errores</span>
+                <span className="font-medium text-red-600">{resultadoImportacion.errores}</span>
+              </div>
+              {resultadoImportacion.mensajesError != null && resultadoImportacion.mensajesError.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-text-secondary mb-1">Detalles de errores / omitidos</p>
+                  <ul className="text-sm bg-background rounded border border-border p-2 max-h-40 overflow-y-auto space-y-1">
+                    {resultadoImportacion.mensajesError.slice(0, 50).map((msg, idx) => (
+                      <li key={idx} className="text-red-700 dark:text-red-400">• {msg}</li>
+                    ))}
+                    {resultadoImportacion.mensajesError.length > 50 && (
+                      <li className="text-text-secondary">… y {resultadoImportacion.mensajesError.length - 50} más</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+              {resultadoImportacion.productosCreados != null && resultadoImportacion.productosCreados.length > 0 && resultadoImportacion.productosCreados.length <= 30 && (
+                <div>
+                  <p className="text-sm font-medium text-text-secondary mb-1">Productos creados</p>
+                  <ul className="text-sm bg-background rounded border border-border p-2 max-h-32 overflow-y-auto">
+                    {resultadoImportacion.productosCreados.map((nombre, idx) => (
+                      <li key={idx}>• {nombre}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {resultadoImportacion.productosCreados != null && resultadoImportacion.productosCreados.length > 30 && (
+                <p className="text-sm text-text-secondary">
+                  {resultadoImportacion.productosCreados.length} productos creados (lista no mostrada).
+                </p>
+              )}
             </div>
           </div>
         </div>
