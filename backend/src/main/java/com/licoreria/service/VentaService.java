@@ -336,6 +336,7 @@ public class VentaService {
         return ApiResponse.ok(page.map(this::toDto));
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<VentaDTO> obtenerPorId(Long id) {
         return ventaRepository.findByIdWithDetalles(id)
                 .map(v -> ApiResponse.ok(toDto(v)))

@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import {
   fetchVentas,
+  fetchVentaPorId,
   anularVenta,
   fetchComprobantePorVenta,
   emitirBoleta,
@@ -14,7 +15,7 @@ import {
   type ComprobanteDTO,
 } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import { FileText, Send, Download, Receipt } from 'lucide-react';
+import { FileText, Send, Download, Receipt, ListChecks } from 'lucide-react';
 
 const formatDate = (s: string) => {
   try {
@@ -50,6 +51,9 @@ export const Ventas = () => {
   const [formFactura, setFormFactura] = useState({ numeroDocumento: '', razonSocial: '' });
   const [guardandoComprobante, setGuardandoComprobante] = useState(false);
   const [errorModal, setErrorModal] = useState<string | null>(null);
+
+  const [detalleVenta, setDetalleVenta] = useState<VentaDTO | null>(null);
+  const [loadingDetalle, setLoadingDetalle] = useState(false);
 
   const loadComprobantes = useCallback(async (listaVentas: VentaDTO[]) => {
     const completadas = listaVentas.filter((v) => v.estado === 'COMPLETADA');
@@ -191,6 +195,15 @@ export const Ventas = () => {
     descargarPdfComprobante(comp.id);
   };
 
+  const openDetalle = async (v: VentaDTO) => {
+    setDetalleVenta(null);
+    setLoadingDetalle(true);
+    const res = await fetchVentaPorId(v.id);
+    setLoadingDetalle(false);
+    if (res.success && res.data) setDetalleVenta(res.data);
+    else alert(res.error?.message ?? 'Error al cargar detalle');
+  };
+
   const handleEnviarSunat = async (comp: ComprobanteDTO) => {
     setEnviandoSunat(comp.id);
     const res = await enviarComprobanteSunat(comp.id);
@@ -225,6 +238,7 @@ export const Ventas = () => {
                     <th className="py-2">Total</th>
                     <th className="py-2">Forma pago</th>
                     <th className="py-2">Estado</th>
+                    <th className="py-2">Detalle</th>
                     <th className="py-2">Comprobante</th>
                     {isAdmin && <th className="py-2">Acciones</th>}
                   </tr>
@@ -251,6 +265,12 @@ export const Ventas = () => {
                           >
                             {v.estado}
                           </span>
+                        </td>
+                        <td className="py-2">
+                          <Button variant="ghost" size="sm" onClick={() => openDetalle(v)} title="Ver detalle de la venta">
+                            <ListChecks size={16} className="mr-1" />
+                            Ver
+                          </Button>
                         </td>
                         <td className="py-2">
                           {v.estado === 'COMPLETADA' && (
@@ -386,6 +406,66 @@ export const Ventas = () => {
               <Button onClick={handleEmitirFactura} disabled={guardandoComprobante}>
                 {guardandoComprobante ? 'Generando...' : 'Emitir factura'}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detalle de venta */}
+      {(detalleVenta != null || loadingDetalle) && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-surface border border-border rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-border font-bold flex justify-between items-center">
+              <span>Detalle de venta {detalleVenta?.numeroVenta ?? '...'}</span>
+              <Button variant="ghost" size="sm" onClick={() => { setDetalleVenta(null); }} disabled={loadingDetalle}>
+                Cerrar
+              </Button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1">
+              {loadingDetalle ? (
+                <p className="text-text-secondary">Cargando...</p>
+              ) : detalleVenta ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <span className="text-text-secondary">Fecha</span>
+                    <span>{formatDate(detalleVenta.fecha)}</span>
+                    <span className="text-text-secondary">Cliente</span>
+                    <span>{detalleVenta.cliente?.nombre ?? 'Público general'}</span>
+                    <span className="text-text-secondary">Forma de pago</span>
+                    <span>{detalleVenta.formaPago}</span>
+                    <span className="text-text-secondary">Total</span>
+                    <span className="font-semibold">{formatSoles(detalleVenta.total)}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-text-secondary mb-2">Productos vendidos</p>
+                    <table className="w-full text-sm border border-border rounded overflow-hidden">
+                      <thead>
+                        <tr className="bg-background border-b border-border">
+                          <th className="text-left p-2">Descripción</th>
+                          <th className="text-right p-2">Cant.</th>
+                          <th className="text-right p-2">P. unit.</th>
+                          <th className="text-right p-2">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(detalleVenta.detalles ?? []).map((d, idx) => (
+                          <tr key={idx} className="border-b border-border last:border-0">
+                            <td className="p-2">
+                              {d.producto?.nombre ?? d.packNombre ?? '-'}
+                            </td>
+                            <td className="p-2 text-right">{d.cantidad}</td>
+                            <td className="p-2 text-right">{formatSoles(d.precioUnitario ?? 0)}</td>
+                            <td className="p-2 text-right">{formatSoles(d.subtotal ?? 0)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {(!detalleVenta.detalles || detalleVenta.detalles.length === 0) && (
+                      <p className="text-text-secondary text-sm py-2">No hay ítems en esta venta.</p>
+                    )}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
