@@ -275,6 +275,10 @@ export async function fetchVentas(params?: {
   return request<{ content: VentaDTO[]; totalElements: number }>(`/api/v1/ventas?${q}`);
 }
 
+export async function fetchVentaPorId(id: number): Promise<ApiResponse<VentaDTO>> {
+  return request<VentaDTO>(`/api/v1/ventas/${id}`);
+}
+
 export async function anularVenta(id: number, motivo?: string): Promise<ApiResponse<VentaDTO>> {
   const q = motivo ? `?motivo=${encodeURIComponent(motivo)}` : '';
   return request<VentaDTO>(`/api/v1/ventas/${id}/anular${q}`, { method: 'PUT' });
@@ -565,4 +569,55 @@ export async function actualizarPromocion(id: number, body: CrearPromocionReques
 
 export async function desactivarPromocion(id: number): Promise<ApiResponse<void>> {
   return request<void>(`/api/v1/promociones/${id}`, { method: 'DELETE' });
+}
+
+// Packs (combos de productos)
+export interface PackProductoDTO {
+  id?: number;
+  producto?: ProductoDTO;
+  cantidad: number;
+}
+
+export interface PackDTO {
+  id: number;
+  nombre: string;
+  precioPack: number;
+  activo: boolean;
+  fechaCreacion?: string;
+  productos?: PackProductoDTO[];
+}
+
+export interface CrearPackRequest {
+  nombre: string;
+  precioPack: number;
+  productos: { productoId: number; cantidad: number }[];
+}
+
+export async function fetchPacks(params?: { soloActivos?: boolean; page?: number; size?: number }): Promise<ApiResponse<{ content: PackDTO[]; totalElements: number }>> {
+  const q = new URLSearchParams();
+  if (params?.soloActivos != null) q.set('soloActivos', String(params.soloActivos));
+  if (params?.page != null) q.set('page', String(params.page));
+  if (params?.size != null) q.set('size', String(params.size));
+  const path = `/api/v1/packs${q.toString() ? '?' + q : ''}`;
+  return request<{ content: PackDTO[]; totalElements: number }>(path);
+}
+
+export async function fetchPackPorId(id: number): Promise<ApiResponse<PackDTO>> {
+  return request<PackDTO>(`/api/v1/packs/${id}`);
+}
+
+export async function crearPack(body: CrearPackRequest): Promise<ApiResponse<PackDTO>> {
+  return request<PackDTO>('/api/v1/packs', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function actualizarPack(id: number, body: CrearPackRequest): Promise<ApiResponse<PackDTO>> {
+  return request<PackDTO>(`/api/v1/packs/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+}
+
+export async function desactivarPack(id: number): Promise<ApiResponse<void>> {
+  return request<void>(`/api/v1/packs/${id}`, { method: 'DELETE' });
+}
+
+export async function calcularPrecioSugeridoPack(id: number): Promise<ApiResponse<number>> {
+  return request<number>(`/api/v1/packs/${id}/calcular-precio`);
 }

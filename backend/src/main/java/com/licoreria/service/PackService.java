@@ -26,6 +26,7 @@ public class PackService {
     private final PackRepository packRepository;
     private final ProductoRepository productoRepository;
 
+    @Transactional(readOnly = true)
     public ApiResponse<Page<PackDTO>> listar(Boolean soloActivos, Pageable pageable) {
         Page<Pack> page;
         if (soloActivos != null && soloActivos) {
@@ -36,6 +37,7 @@ public class PackService {
         return ApiResponse.ok(page.map(this::toDto));
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<PackDTO> obtenerPorId(Long id) {
         return packRepository.findById(id)
                 .map(p -> ApiResponse.ok(toDto(p)))
