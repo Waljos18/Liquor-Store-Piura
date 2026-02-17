@@ -280,6 +280,20 @@ public class ProductoService {
         return ApiResponse.ok(null, "Producto desactivado exitosamente");
     }
 
+    @Transactional
+    public ApiResponse<Void> eliminarByCodigoBarras(String codigoBarras) {
+        if (codigoBarras == null || codigoBarras.isBlank()) {
+            return ApiResponse.error("INVALID", "Código de barras requerido");
+        }
+        Producto p = productoRepository.findByCodigoBarras(codigoBarras.trim()).orElse(null);
+        if (p == null) {
+            return ApiResponse.error("NOT_FOUND", "No existe producto con código " + codigoBarras);
+        }
+        p.setActivo(false);
+        productoRepository.save(p);
+        return ApiResponse.ok(null, "Producto desactivado exitosamente");
+    }
+
     private ProductoDTO toDto(Producto p) {
         ProductoDTO d = new ProductoDTO();
         d.setId(p.getId());

@@ -28,6 +28,9 @@ public class CrearVentaRequest {
 
     private BigDecimal descuento;
 
+    /** Si true (default), se aplica IGV 18%. Si false, impuesto = 0 */
+    private Boolean aplicarIgv = true;
+
     private String observaciones;
 
     /** Referencia de operación para YAPE/PLIN (opcional) */

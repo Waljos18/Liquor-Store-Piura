@@ -27,6 +27,7 @@ const formatSoles = (n: number) => `S/ ${(n ?? 0).toFixed(2)}`;
 export const Dashboard = () => {
   const [dashboard, setDashboard] = useState<{
     ventasHoy: number;
+    gananciasHoy?: number;
     transaccionesHoy: number;
     productosActivos: number;
     productosStockBajo: number;
@@ -107,6 +108,13 @@ export const Dashboard = () => {
       color: 'text-green-500',
     },
     {
+      label: 'Ganancias Hoy',
+      value: dashboard != null && dashboard.gananciasHoy != null ? formatSoles(dashboard.gananciasHoy) : '-',
+      sub: 'Venta − Compra',
+      icon: DollarSign,
+      color: 'text-emerald-600',
+    },
+    {
       label: 'Productos',
       value: String(dashboard?.productosActivos ?? '-'),
       sub: 'Activos',
@@ -150,7 +158,7 @@ export const Dashboard = () => {
         <p className="text-text-secondary">Cargando...</p>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {stats.map((stat, index) => (
               <Card key={index}>
                 <CardContent className="flex items-center justify-between p-4">

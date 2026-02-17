@@ -3,7 +3,9 @@ package com.licoreria.service;
 import com.licoreria.dto.ApiResponse;
 import com.licoreria.dto.CategoriaDTO;
 import com.licoreria.entity.Categoria;
+import com.licoreria.entity.Producto;
 import com.licoreria.repository.CategoriaRepository;
+import com.licoreria.repository.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 public class CategoriaService {
 
     private final CategoriaRepository categoriaRepository;
+    private final ProductoRepository productoRepository;
 
     public ApiResponse<List<CategoriaDTO>> listar(boolean soloActivas) {
         List<Categoria> list = soloActivas
@@ -66,7 +69,30 @@ public class CategoriaService {
         if (!categoriaRepository.existsById(id)) {
             return ApiResponse.error("NOT_FOUND", "Categoría no encontrada");
         }
+        List<Producto> productosEnCategoria = productoRepository.findByCategoriaId(id);
+        for (Producto p : productosEnCategoria) {
+            p.setCategoria(null);
+            productoRepository.save(p);
+        }
         categoriaRepository.deleteById(id);
+        return ApiResponse.ok(null, "Categoría eliminada exitosamente");
+    }
+
+    @Transactional
+    public ApiResponse<Void> eliminarByNombre(String nombre) {
+        if (nombre == null || nombre.isBlank()) {
+            return ApiResponse.error("INVALID", "Nombre de categoría requerido");
+        }
+        Categoria c = categoriaRepository.findByNombreIgnoreCase(nombre.trim()).orElse(null);
+        if (c == null) {
+            return ApiResponse.error("NOT_FOUND", "No existe categoría con nombre '" + nombre + "'");
+        }
+        List<Producto> productosEnCategoria = productoRepository.findByCategoriaId(c.getId());
+        for (Producto p : productosEnCategoria) {
+            p.setCategoria(null);
+            productoRepository.save(p);
+        }
+        categoriaRepository.delete(c);
         return ApiResponse.ok(null, "Categoría eliminada exitosamente");
     }
 

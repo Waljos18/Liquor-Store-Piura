@@ -35,4 +35,6 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
             Pageable pageable);
 
     boolean existsByCodigoBarras(String codigoBarras);
+
+    List<Producto> findByCategoriaId(Long categoriaId);
 }

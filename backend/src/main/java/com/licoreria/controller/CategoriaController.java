@@ -66,4 +66,12 @@ public class CategoriaController {
         if (!res.isSuccess()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
         return ResponseEntity.ok(res);
     }
+
+    @DeleteMapping("/by-nombre")
+    @Operation(summary = "Eliminar categoría por nombre (ignora mayúsculas/minúsculas)")
+    public ResponseEntity<ApiResponse<Void>> eliminarByNombre(@RequestParam("nombre") String nombre) {
+        ApiResponse<Void> res = categoriaService.eliminarByNombre(nombre);
+        if (!res.isSuccess()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+        return ResponseEntity.ok(res);
+    }
 }

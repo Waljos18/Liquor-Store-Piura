@@ -46,11 +46,15 @@ public class PackService {
 
     @Transactional
     public ApiResponse<PackDTO> crear(CrearPackRequest request) {
-        // Validar productos
+        if (request.getProductos() == null || request.getProductos().isEmpty()) {
+            return ApiResponse.error("INVALID", "El pack debe tener al menos un producto");
+        }
+
         List<PackProducto> productos = new ArrayList<>();
         BigDecimal precioTotalProductos = BigDecimal.ZERO;
 
         for (CrearPackRequest.ProductoPackRequest item : request.getProductos()) {
+            if (item == null || item.getProductoId() == null) continue;
             Producto producto = productoRepository.findById(item.getProductoId())
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + item.getProductoId()));
 
@@ -58,13 +62,14 @@ public class PackService {
                 return ApiResponse.error("INVALID", "El producto " + producto.getNombre() + " está inactivo");
             }
 
-            BigDecimal subtotal = producto.getPrecioVenta()
-                    .multiply(new BigDecimal(item.getCantidad()));
+            BigDecimal precioVenta = producto.getPrecioVenta() != null ? producto.getPrecioVenta() : BigDecimal.ZERO;
+            int cantidad = item.getCantidad() != null && item.getCantidad() > 0 ? item.getCantidad() : 1;
+            BigDecimal subtotal = precioVenta.multiply(new BigDecimal(cantidad));
             precioTotalProductos = precioTotalProductos.add(subtotal);
 
             PackProducto packProducto = PackProducto.builder()
                     .producto(producto)
-                    .cantidad(item.getCantidad())
+                    .cantidad(cantidad)
                     .build();
 
             productos.add(packProducto);
@@ -95,16 +100,18 @@ public class PackService {
         if (request.getPrecioPack() != null) pack.setPrecioPack(request.getPrecioPack());
 
         // Actualizar productos si se proporcionan
-        if (request.getProductos() != null) {
+        if (request.getProductos() != null && !request.getProductos().isEmpty()) {
             pack.getProductos().clear();
             for (CrearPackRequest.ProductoPackRequest item : request.getProductos()) {
+                if (item == null || item.getProductoId() == null) continue;
                 Producto producto = productoRepository.findById(item.getProductoId())
                         .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + item.getProductoId()));
+                int cantidad = item.getCantidad() != null && item.getCantidad() > 0 ? item.getCantidad() : 1;
 
                 PackProducto packProducto = PackProducto.builder()
                         .pack(pack)
                         .producto(producto)
-                        .cantidad(item.getCantidad())
+                        .cantidad(cantidad)
                         .build();
 
                 pack.getProductos().add(packProducto);
@@ -131,9 +138,10 @@ public class PackService {
 
         BigDecimal precioTotal = BigDecimal.ZERO;
         for (PackProducto packProducto : pack.getProductos()) {
-            BigDecimal subtotal = packProducto.getProducto().getPrecioVenta()
-                    .multiply(new BigDecimal(packProducto.getCantidad()));
-            precioTotal = precioTotal.add(subtotal);
+            if (packProducto.getProducto() == null) continue;
+            BigDecimal pv = packProducto.getProducto().getPrecioVenta() != null
+                    ? packProducto.getProducto().getPrecioVenta() : BigDecimal.ZERO;
+            precioTotal = precioTotal.add(pv.multiply(new BigDecimal(packProducto.getCantidad())));
         }
 
         // Precio sugerido: 10% de descuento sobre el total

@@ -1,0 +1,12 @@
+R_DEF: Internal format may change without notice
+local
+string app_name
+string home_title
+string login_button
+string login_error
+string login_password
+string login_required
+string login_title
+string login_username
+string logout
+style Theme.Chilalo

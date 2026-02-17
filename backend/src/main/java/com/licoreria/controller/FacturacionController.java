@@ -61,10 +61,7 @@ public class FacturacionController {
     @Operation(summary = "Obtener comprobante asociado a una venta")
     public ResponseEntity<ApiResponse<ComprobanteDTO>> comprobantePorVenta(@PathVariable Long ventaId) {
         Optional<ComprobanteDTO> comp = facturacionService.obtenerComprobantePorVentaId(ventaId);
-        if (comp.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("NOT_FOUND", "No hay comprobante para esta venta"));
-        }
-        return ResponseEntity.ok(ApiResponse.ok(comp.get()));
+        return ResponseEntity.ok(ApiResponse.ok(comp.orElse(null), comp.isPresent() ? null : "No hay comprobante para esta venta"));
     }
 
     @GetMapping("/comprobantes/{id}/pdf")

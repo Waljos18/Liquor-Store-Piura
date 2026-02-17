@@ -52,7 +52,6 @@ export const Inventory = () => {
   const [proveedores, setProveedores] = useState<ProveedorDTO[]>([]);
   const [compraSaving, setCompraSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const load = async () => {
     setLoading(true);
     const [stockRes, proximosRes, movRes] = await Promise.all([
@@ -60,8 +59,24 @@ export const Inventory = () => {
       fetchProximosVencer(),
       fetchMovimientosInventario({ size: 20 }),
     ]);
-    if (stockRes.success && stockRes.data) setStockBajo(stockRes.data);
-    if (proximosRes.success && proximosRes.data) setProximosVencer(proximosRes.data);
+    if (stockRes.success && stockRes.data) {
+      const sorted = [...stockRes.data].sort((a, b) => {
+        const minA = a.stockMinimo ?? 0;
+        const minB = b.stockMinimo ?? 0;
+        const faltanteA = Math.max(0, minA - a.stockActual);
+        const faltanteB = Math.max(0, minB - b.stockActual);
+        return faltanteB - faltanteA;
+      });
+      setStockBajo(sorted);
+    }
+    if (proximosRes.success && proximosRes.data) {
+      const sorted = [...proximosRes.data].sort((a, b) => {
+        const dA = diasParaVencer(a.fechaVencimiento) ?? 999;
+        const dB = diasParaVencer(b.fechaVencimiento) ?? 999;
+        return dA - dB;
+      });
+      setProximosVencer(sorted);
+    }
     if (movRes.success && movRes.data?.content) setMovimientos(movRes.data.content);
     setLoading(false);
   };
@@ -171,7 +186,30 @@ export const Inventory = () => {
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
         <h2 className="text-2xl font-bold">Inventario</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-sm text-text-secondary flex items-center gap-2">
+            Productos con stock bajo:
+            <select
+              className="px-3 py-2 border border-border rounded bg-surface text-sm min-w-[200px]"
+              value=""
+              onChange={(e) => {
+                const id = e.target.value ? Number(e.target.value) : 0;
+                const p = id ? stockBajo.find((x) => x.id === id) : null;
+                if (p) openAjuste(p);
+                e.target.value = '';
+              }}
+            >
+              <option value="">Seleccione para ajustar o reabastecer</option>
+              {stockBajo.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nombre} (Stock: {p.stockActual} / Mín: {p.stockMinimo ?? 0})
+                </option>
+              ))}
+              {stockBajo.length === 0 && !loading && (
+                <option value="" disabled>Ninguno</option>
+              )}
+            </select>
+          </label>
           <Button variant="outline" onClick={handleDescargarReporte}>
             <BarChart2 size={18} className="mr-2" /> Reportes
           </Button>

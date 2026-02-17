@@ -7,6 +7,7 @@ import { CategoriasSettings } from '../components/settings/CategoriasSettings';
 import { ClientesSettings } from '../components/settings/ClientesSettings';
 import { ProductosSettings } from '../components/settings/ProductosSettings';
 import { ProveedoresSettings } from '../components/settings/ProveedoresSettings';
+import { UsuariosSettings } from '../components/settings/UsuariosSettings';
 
 type TabId = 'categorias' | 'clientes' | 'productos' | 'proveedores' | 'metodos-pago' | 'usuarios' | 'recibos' | 'impresoras';
 
@@ -91,26 +92,38 @@ export const Settings = () => {
             {tab === 'productos' && <ProductosSettings />}
             {tab === 'proveedores' && <ProveedoresSettings />}
             {tab === 'metodos-pago' && (
-              <div className="text-text-secondary">
-                <p>Métodos de pago disponibles: Efectivo, Tarjeta, Yape, Plin, Mixto.</p>
-                <p className="mt-2 text-sm">Configuración en desarrollo.</p>
+              <div className="space-y-3 text-text-secondary">
+                <p>Métodos de pago disponibles en el POS y ventas:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li><strong>Efectivo</strong> — Pago en billetes y monedas</li>
+                  <li><strong>Tarjeta</strong> — Débito o crédito</li>
+                  <li><strong>Transferencia</strong> — Transferencia bancaria</li>
+                  <li><strong>Yape</strong> / <strong>Plin</strong> — Billeteras digitales</li>
+                  <li><strong>Mixto</strong> — Combinación de varios métodos</li>
+                </ul>
+                <p className="text-sm mt-4">La habilitación o deshabilitación de métodos se podrá configurar aquí en una próxima versión.</p>
               </div>
             )}
-            {tab === 'usuarios' && (
-              <div className="text-text-secondary">
-                <p>Gestión de usuarios y roles. Configuración en desarrollo.</p>
-              </div>
-            )}
+            {tab === 'usuarios' && <UsuariosSettings />}
             {tab === 'recibos' && (
-              <div className="text-text-secondary">
-                <p>Configuración de serie, numeración y datos de la empresa para recibos.</p>
-                <p className="mt-2 text-sm">Configuración en desarrollo.</p>
+              <div className="space-y-3 text-text-secondary">
+                <p>Configuración de comprobantes (boletas y facturas):</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Serie de boleta (ej. B001) y numeración</li>
+                  <li>Serie de factura (ej. F001)</li>
+                  <li>Datos de la empresa: razón social, RUC, dirección</li>
+                </ul>
+                <p className="text-sm mt-4">Estos datos se usarán al generar PDF y XML para SUNAT. Configuración editable en una próxima versión.</p>
               </div>
             )}
             {tab === 'impresoras' && (
-              <div className="text-text-secondary">
-                <p>Configuración de impresoras para tickets y comprobantes.</p>
-                <p className="mt-2 text-sm">Configuración en desarrollo.</p>
+              <div className="space-y-3 text-text-secondary">
+                <p>Configuración de impresoras para:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Tickets de venta (impresora térmica)</li>
+                  <li>Comprobantes en PDF</li>
+                </ul>
+                <p className="text-sm mt-4">Selección de impresora por defecto y pruebas de impresión en una próxima versión.</p>
               </div>
             )}
           </CardContent>

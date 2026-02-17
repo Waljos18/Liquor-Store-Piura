@@ -62,6 +62,7 @@ async function requestBlob(path: string): Promise<Blob> {
 // Dashboard
 export interface DashboardDTO {
   ventasHoy: number;
+  gananciasHoy?: number;  // precio venta - precio compra (hoy)
   transaccionesHoy: number;
   productosActivos: number;
   productosStockBajo: number;
@@ -189,6 +190,10 @@ export async function eliminarProducto(id: number): Promise<ApiResponse<void>> {
   return request<void>(`/api/v1/productos/${id}`, { method: 'DELETE' });
 }
 
+export async function eliminarProductoByCodigo(codigoBarras: string): Promise<ApiResponse<void>> {
+  return request<void>(`/api/v1/productos/by-codigo/${encodeURIComponent(codigoBarras)}`, { method: 'DELETE' });
+}
+
 export interface ImportarProductosResult {
   totalProcesados: number;
   creados: number;
@@ -239,6 +244,8 @@ export interface CrearVentaRequest {
   montoRecibido?: number;
   pagosMixtos?: PagoMixto[];
   descuento?: number;
+  /** Si true (default), se aplica IGV 18%. Si false, total = subtotal sin impuesto */
+  aplicarIgv?: boolean;
   referencia?: string;
 }
 
@@ -411,6 +418,17 @@ export async function ajustarInventario(
   return request<void>(`/api/v1/inventario/ajustar?${q}`, { method: 'POST' });
 }
 
+/** Registra entrada de pack: convierte automáticamente a unidades (ej. 10 six pack → 60 unidades) */
+export async function registrarEntradaPack(
+  packId: number,
+  cantidadPacks: number
+): Promise<ApiResponse<void>> {
+  return request<void>('/api/v1/inventario/entrada-pack', {
+    method: 'POST',
+    body: JSON.stringify({ packId, cantidadPacks }),
+  });
+}
+
 // Compras
 export interface CrearCompraItem {
   productoId: number;
@@ -462,6 +480,10 @@ export async function actualizarCategoria(id: number, dto: Partial<CategoriaDTO>
 
 export async function eliminarCategoria(id: number): Promise<ApiResponse<void>> {
   return request<void>(`/api/v1/categorias/${id}`, { method: 'DELETE' });
+}
+
+export async function eliminarCategoriaByNombre(nombre: string): Promise<ApiResponse<void>> {
+  return request<void>(`/api/v1/categorias/by-nombre?nombre=${encodeURIComponent(nombre)}`, { method: 'DELETE' });
 }
 
 // Clientes
@@ -518,6 +540,36 @@ export async function actualizarProveedor(id: number, dto: Partial<ProveedorDTO>
 
 export async function eliminarProveedor(id: number): Promise<ApiResponse<void>> {
   return request<void>(`/api/v1/proveedores/${id}`, { method: 'DELETE' });
+}
+
+// Usuarios (solo ADMIN)
+export interface UsuarioDTO {
+  id: number;
+  username: string;
+  email: string;
+  nombre: string;
+  rol: string;
+  activo?: boolean;
+}
+
+export async function fetchUsuarios(params?: { page?: number; size?: number }): Promise<ApiResponse<{ content: UsuarioDTO[]; totalElements: number }>> {
+  const q = new URLSearchParams();
+  if (params?.page != null) q.set('page', String(params.page));
+  if (params?.size != null) q.set('size', String(params.size));
+  const path = `/api/v1/usuarios${q.toString() ? '?' + q : ''}`;
+  return request<{ content: UsuarioDTO[]; totalElements: number }>(path);
+}
+
+export async function crearUsuario(dto: Partial<UsuarioDTO> & { password?: string }): Promise<ApiResponse<UsuarioDTO>> {
+  return request<UsuarioDTO>('/api/v1/usuarios', { method: 'POST', body: JSON.stringify(dto) });
+}
+
+export async function actualizarUsuario(id: number, dto: Partial<UsuarioDTO> & { password?: string }): Promise<ApiResponse<UsuarioDTO>> {
+  return request<UsuarioDTO>(`/api/v1/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(dto) });
+}
+
+export async function eliminarUsuario(id: number): Promise<ApiResponse<void>> {
+  return request<void>(`/api/v1/usuarios/${id}`, { method: 'DELETE' });
 }
 
 // Promociones

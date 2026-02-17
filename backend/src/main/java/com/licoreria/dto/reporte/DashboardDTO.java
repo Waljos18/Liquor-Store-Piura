@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 public class DashboardDTO {
 
     private BigDecimal ventasHoy;
+    private BigDecimal gananciasHoy;  // suma de (precio venta - precio compra) por unidad vendida
     private long transaccionesHoy;
     private long productosActivos;
     private long productosStockBajo;

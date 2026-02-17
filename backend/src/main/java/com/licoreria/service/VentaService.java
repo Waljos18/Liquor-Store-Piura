@@ -148,9 +148,11 @@ public class VentaService {
             subtotalConDescuento = BigDecimal.ZERO;
         }
 
-        // Calcular IGV y total
-        BigDecimal impuesto = subtotalConDescuento.multiply(IGV_RATE)
-                .setScale(2, RoundingMode.HALF_UP);
+        // IGV opcional: si aplicarIgv es false, impuesto = 0
+        boolean aplicarIgv = request.getAplicarIgv() == null || Boolean.TRUE.equals(request.getAplicarIgv());
+        BigDecimal impuesto = aplicarIgv
+                ? subtotalConDescuento.multiply(IGV_RATE).setScale(2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
         BigDecimal total = subtotalConDescuento.add(impuesto);
 
         // Validar forma de pago (incluye YAPE, PLIN)

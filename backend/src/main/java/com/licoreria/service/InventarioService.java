@@ -2,6 +2,7 @@ package com.licoreria.service;
 
 import com.licoreria.dto.ApiResponse;
 import com.licoreria.dto.ProductoDTO;
+import com.licoreria.dto.inventario.MovimientoInventarioDTO;
 import com.licoreria.dto.inventario.StockEquivalenciaPacksDTO;
 import com.licoreria.entity.MovimientoInventario;
 import com.licoreria.entity.Pack;
@@ -14,6 +15,7 @@ import com.licoreria.repository.ProductoRepository;
 import com.licoreria.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,7 +37,7 @@ public class InventarioService {
     private final PackRepository packRepository;
     private final UsuarioRepository usuarioRepository;
 
-    public ApiResponse<Page<MovimientoInventario>> listarMovimientos(
+    public ApiResponse<Page<MovimientoInventarioDTO>> listarMovimientos(
             Long productoId,
             String tipoMovimiento,
             Instant fechaDesde,
@@ -46,18 +48,52 @@ public class InventarioService {
 
         if (productoId != null) {
             page = movimientoRepository.findByProductoId(productoId, pageable);
-        } else if (tipoMovimiento != null) {
-            page = movimientoRepository.findByTipoMovimiento(
-                    MovimientoInventario.TipoMovimiento.valueOf(tipoMovimiento), 
-                    pageable
-            );
+        } else if (tipoMovimiento != null && !tipoMovimiento.isBlank()) {
+            try {
+                page = movimientoRepository.findByTipoMovimiento(
+                        MovimientoInventario.TipoMovimiento.valueOf(tipoMovimiento),
+                        pageable
+                );
+            } catch (IllegalArgumentException e) {
+                page = movimientoRepository.findAll(pageable);
+            }
         } else if (fechaDesde != null && fechaHasta != null) {
             page = movimientoRepository.findByFechaBetween(fechaDesde, fechaHasta, pageable);
         } else {
             page = movimientoRepository.findAll(pageable);
         }
 
-        return ApiResponse.ok(page);
+        List<MovimientoInventarioDTO> content = page.getContent().stream()
+                .map(this::toMovimientoDto)
+                .collect(Collectors.toList());
+        return ApiResponse.ok(new PageImpl<>(content, page.getPageable(), page.getTotalElements()));
+    }
+
+    private MovimientoInventarioDTO toMovimientoDto(MovimientoInventario m) {
+        MovimientoInventarioDTO.ProductoResumenDTO productoDto = null;
+        if (m.getProducto() != null) {
+            productoDto = MovimientoInventarioDTO.ProductoResumenDTO.builder()
+                    .id(m.getProducto().getId())
+                    .nombre(m.getProducto().getNombre())
+                    .build();
+        }
+        MovimientoInventarioDTO.UsuarioResumenDTO usuarioDto = null;
+        if (m.getUsuario() != null) {
+            usuarioDto = MovimientoInventarioDTO.UsuarioResumenDTO.builder()
+                    .id(m.getUsuario().getId())
+                    .nombre(m.getUsuario().getNombre())
+                    .username(m.getUsuario().getUsername())
+                    .build();
+        }
+        return MovimientoInventarioDTO.builder()
+                .id(m.getId())
+                .tipoMovimiento(m.getTipoMovimiento() != null ? m.getTipoMovimiento().name() : null)
+                .cantidad(m.getCantidad())
+                .motivo(m.getMotivo())
+                .fecha(m.getFecha())
+                .producto(productoDto)
+                .usuario(usuarioDto)
+                .build();
     }
 
     public ApiResponse<List<MovimientoInventario>> obtenerHistorialProducto(Long productoId) {

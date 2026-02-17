@@ -3,6 +3,7 @@ package com.licoreria.controller;
 import com.licoreria.dto.ApiResponse;
 import com.licoreria.dto.ProductoDTO;
 import com.licoreria.dto.inventario.EntradaPackRequest;
+import com.licoreria.dto.inventario.MovimientoInventarioDTO;
 import com.licoreria.dto.inventario.StockEquivalenciaPacksDTO;
 import com.licoreria.entity.MovimientoInventario;
 import com.licoreria.service.InventarioService;
@@ -29,7 +30,7 @@ public class InventarioController {
 
     @GetMapping("/movimientos")
     @Operation(summary = "Listar movimientos de inventario", description = "Lista movimientos con filtros opcionales")
-    public ResponseEntity<ApiResponse<Page<MovimientoInventario>>> listarMovimientos(
+    public ResponseEntity<ApiResponse<Page<MovimientoInventarioDTO>>> listarMovimientos(
             @RequestParam(required = false) Long productoId,
             @RequestParam(required = false) String tipoMovimiento,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant fechaDesde,

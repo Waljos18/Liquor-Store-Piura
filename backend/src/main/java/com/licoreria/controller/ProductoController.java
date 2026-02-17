@@ -101,4 +101,15 @@ public class ProductoController {
         if (!res.isSuccess()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
         return ResponseEntity.ok(res);
     }
+
+    @DeleteMapping("/by-codigo/{codigo}")
+    @Operation(summary = "Desactivar producto por código de barras (eliminación lógica)")
+    public ResponseEntity<ApiResponse<Void>> eliminarByCodigo(@PathVariable String codigo) {
+        ApiResponse<Void> res = productoService.eliminarByCodigoBarras(codigo);
+        if (!res.isSuccess() && "NOT_FOUND".equals(res.getError().getCode())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+        }
+        if (!res.isSuccess()) return ResponseEntity.badRequest().body(res);
+        return ResponseEntity.ok(res);
+    }
 }

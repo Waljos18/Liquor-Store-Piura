@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Chilalo</string>
+    <string name="home_title">Inicio</string>
+    <string name="login_button">Entrar</string>
+    <string name="login_error">Usuario o contraseña incorrectos</string>
+    <string name="login_password">Contraseña</string>
+    <string name="login_required">Completa usuario y contraseña</string>
+    <string name="login_title">Iniciar sesión</string>
+    <string name="login_username">Usuario</string>
+    <string name="logout">Cerrar sesión</string>
+    <style name="Theme.Chilalo" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

@@ -2,6 +2,7 @@ package com.licoreria.service;
 
 import com.licoreria.dto.ProductoDTO;
 import com.licoreria.dto.reporte.*;
+import com.licoreria.entity.DetalleVenta;
 import com.licoreria.entity.Producto;
 import com.licoreria.entity.Venta;
 import com.licoreria.repository.ProductoRepository;
@@ -46,8 +47,25 @@ public class ReporteService {
         ReporteVentasDTO ventasHoy = obtenerReporteVentas(hoy, hoy, "DIA");
         ReporteInventarioDTO inventario = obtenerReporteInventario();
 
+        Instant desde = hoy.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant hasta = hoy.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+        List<Venta> ventasConDetalles = ventaRepository.findByFechaBetweenWithDetalles(desde, hasta);
+        BigDecimal gananciasHoy = BigDecimal.ZERO;
+        for (Venta v : ventasConDetalles) {
+            if (v.getEstado() != Venta.Estado.COMPLETADA) continue;
+            for (DetalleVenta d : v.getDetalles()) {
+                if (d.getProducto() != null && d.getPrecioUnitario() != null && d.getCantidad() != null) {
+                    BigDecimal costo = d.getProducto().getPrecioCompra() != null
+                            ? d.getProducto().getPrecioCompra() : BigDecimal.ZERO;
+                    BigDecimal margen = d.getPrecioUnitario().subtract(costo);
+                    gananciasHoy = gananciasHoy.add(margen.multiply(BigDecimal.valueOf(d.getCantidad())));
+                }
+            }
+        }
+
         com.licoreria.dto.reporte.DashboardDTO dto = new com.licoreria.dto.reporte.DashboardDTO();
         dto.setVentasHoy(ventasHoy.getTotalVentas());
+        dto.setGananciasHoy(gananciasHoy);
         dto.setTransaccionesHoy(ventasHoy.getTotalTransacciones());
         dto.setProductosActivos(inventario.getProductosActivos());
         dto.setProductosStockBajo(inventario.getProductosStockBajo());

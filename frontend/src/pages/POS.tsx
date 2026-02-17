@@ -42,6 +42,7 @@ export const POS = () => {
   const [clientes, setClientes] = useState<ClienteDTO[]>([]);
   const [formaPago, setFormaPago] = useState<FormaPago>('EFECTIVO');
   const [montoRecibido, setMontoRecibido] = useState('');
+  const [aplicarIgv, setAplicarIgv] = useState(true);
   const [resultado, setResultado] = useState<{ numeroVenta: string; total: number; vuelto?: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +51,7 @@ export const POS = () => {
   const clienteSearchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
-  const impuesto = subtotal * IGV;
+  const impuesto = aplicarIgv ? subtotal * IGV : 0;
   const total = subtotal + impuesto;
   const vuelto = formaPago === 'EFECTIVO' && montoRecibido ? Math.max(0, parseFloat(montoRecibido) - total) : 0;
 
@@ -142,6 +143,7 @@ export const POS = () => {
       items,
       formaPago,
       clienteId: cliente?.id,
+      aplicarIgv,
     };
 
     if (formaPago === 'EFECTIVO' && montoRecibido) {
@@ -262,10 +264,21 @@ export const POS = () => {
               <p className="text-text-secondary text-sm">Subtotal</p>
               <p className="text-lg font-bold">S/ {subtotal.toFixed(2)}</p>
             </div>
-            <div>
-              <p className="text-text-secondary text-sm">IGV (18%)</p>
-              <p className="text-lg">S/ {impuesto.toFixed(2)}</p>
-            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={aplicarIgv}
+                onChange={(e) => setAplicarIgv(e.target.checked)}
+                className="rounded border-border"
+              />
+              <span className="text-sm">Incluir IGV (18%)</span>
+            </label>
+            {aplicarIgv && (
+              <div>
+                <p className="text-text-secondary text-sm">IGV (18%)</p>
+                <p className="text-lg">S/ {impuesto.toFixed(2)}</p>
+              </div>
+            )}
             <div className="border-t border-border pt-2">
               <p className="text-text-secondary text-sm">Total</p>
               <p className="text-2xl font-bold text-primary">S/ {total.toFixed(2)}</p>
