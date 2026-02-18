@@ -38,6 +38,15 @@ public class PackService {
     }
 
     @Transactional(readOnly = true)
+    public ApiResponse<List<PackDTO>> buscarParaPos(String q) {
+        if (q == null || q.trim().length() < 2) {
+            return ApiResponse.ok(new ArrayList<>());
+        }
+        List<Pack> packs = packRepository.buscarParaPos(q.trim());
+        return ApiResponse.ok(packs.stream().map(this::toDto).collect(Collectors.toList()));
+    }
+
+    @Transactional(readOnly = true)
     public ApiResponse<PackDTO> obtenerPorId(Long id) {
         return packRepository.findById(id)
                 .map(p -> ApiResponse.ok(toDto(p)))

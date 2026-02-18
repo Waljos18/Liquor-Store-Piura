@@ -11,6 +11,7 @@ public class ReporteVentasDTO {
     private BigDecimal totalVentas;
     private long totalTransacciones;
     private BigDecimal ticketPromedio;
+    private BigDecimal ganancias;  // suma de (precio venta − precio compra) por unidad en el período
     private List<VentaPorDiaDTO> ventasPorDia;
     private List<VentaPorFormaPagoDTO> ventasPorFormaPago;
 

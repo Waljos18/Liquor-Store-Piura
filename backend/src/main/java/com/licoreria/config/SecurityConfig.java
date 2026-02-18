@@ -1,5 +1,6 @@
 package com.licoreria.config;
 
+import com.licoreria.security.Http401AuthenticationEntryPoint;
 import com.licoreria.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,10 +23,12 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final Http401AuthenticationEntryPoint http401EntryPoint;
 
     private static final String[] PUBLIC = {
             "/api/v1/auth/login",
             "/api/v1/auth/refresh",
+            "/api/v1/auth/logout",
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/v3/api-docs/**",
@@ -38,6 +41,7 @@ public class SecurityConfig {
                 .csrf(c -> c.disable())
                 .cors(c -> c.configurationSource(corsConfigurationSource))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(e -> e.authenticationEntryPoint(http401EntryPoint))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(PUBLIC).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

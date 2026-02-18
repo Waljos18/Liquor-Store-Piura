@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,8 +65,8 @@ public class ReporteService {
         }
 
         com.licoreria.dto.reporte.DashboardDTO dto = new com.licoreria.dto.reporte.DashboardDTO();
-        dto.setVentasHoy(ventasHoy.getTotalVentas());
-        dto.setGananciasHoy(gananciasHoy);
+        dto.setVentasHoy(ventasHoy.getTotalVentas() != null ? ventasHoy.getTotalVentas() : BigDecimal.ZERO);
+        dto.setGananciasHoy(gananciasHoy != null ? gananciasHoy : BigDecimal.ZERO);
         dto.setTransaccionesHoy(ventasHoy.getTotalTransacciones());
         dto.setProductosActivos(inventario.getProductosActivos());
         dto.setProductosStockBajo(inventario.getProductosStockBajo());
@@ -87,22 +88,68 @@ public class ReporteService {
                 ? totalVentas.divide(BigDecimal.valueOf(transacciones), 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
-        // Agrupar por fecha
-        Map<String, List<Venta>> porFecha = ventas.stream()
-                .collect(Collectors.groupingBy(v -> LocalDate.ofInstant(v.getFecha(), ZoneId.systemDefault()).format(DATE_FMT)));
+        // Agrupar según agrupacion: DIA, SEMANA o MES
+        String agrupacionNorm = (agrupacion != null && !agrupacion.isBlank()) ? agrupacion.toUpperCase(java.util.Locale.ROOT) : "DIA";
+        Map<String, List<Venta>> porPeriodo;
+        if ("SEMANA".equals(agrupacionNorm)) {
+            WeekFields isoWeek = WeekFields.ISO;
+            porPeriodo = ventas.stream()
+                    .collect(Collectors.groupingBy(v -> {
+                        LocalDate d = LocalDate.ofInstant(v.getFecha(), ZoneId.systemDefault());
+                        LocalDate lunes = d.with(isoWeek.dayOfWeek(), 1);
+                        return lunes.format(DATE_FMT);
+                    }));
+        } else if ("MES".equals(agrupacionNorm)) {
+            porPeriodo = ventas.stream()
+                    .collect(Collectors.groupingBy(v -> {
+                        LocalDate d = LocalDate.ofInstant(v.getFecha(), ZoneId.systemDefault());
+                        return d.withDayOfMonth(1).format(DATE_FMT);
+                    }));
+        } else {
+            porPeriodo = ventas.stream()
+                    .collect(Collectors.groupingBy(v -> LocalDate.ofInstant(v.getFecha(), ZoneId.systemDefault()).format(DATE_FMT)));
+        }
 
         List<ReporteVentasDTO.VentaPorDiaDTO> ventasPorDia = new ArrayList<>();
-        LocalDate current = fechaInicio;
-        while (!current.isAfter(fechaFin)) {
-            String key = current.format(DATE_FMT);
-            List<Venta> delDia = porFecha.getOrDefault(key, List.of());
-            BigDecimal totalDia = delDia.stream().map(Venta::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
-            ventasPorDia.add(new ReporteVentasDTO.VentaPorDiaDTO() {{
-                setFecha(key);
-                setTotal(totalDia);
-                setTransacciones(delDia.size());
-            }});
-            current = current.plusDays(1);
+        if ("SEMANA".equals(agrupacionNorm)) {
+            LocalDate current = fechaInicio.with(WeekFields.ISO.dayOfWeek(), 1);
+            while (!current.isAfter(fechaFin)) {
+                String key = current.format(DATE_FMT);
+                List<Venta> delPeriodo = porPeriodo.getOrDefault(key, List.of());
+                BigDecimal totalPeriodo = delPeriodo.stream().map(Venta::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+                ventasPorDia.add(new ReporteVentasDTO.VentaPorDiaDTO() {{
+                    setFecha(key);
+                    setTotal(totalPeriodo);
+                    setTransacciones(delPeriodo.size());
+                }});
+                current = current.plusWeeks(1);
+            }
+        } else if ("MES".equals(agrupacionNorm)) {
+            LocalDate current = fechaInicio.withDayOfMonth(1);
+            while (!current.isAfter(fechaFin)) {
+                String key = current.format(DATE_FMT);
+                List<Venta> delPeriodo = porPeriodo.getOrDefault(key, List.of());
+                BigDecimal totalPeriodo = delPeriodo.stream().map(Venta::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+                ventasPorDia.add(new ReporteVentasDTO.VentaPorDiaDTO() {{
+                    setFecha(key);
+                    setTotal(totalPeriodo);
+                    setTransacciones(delPeriodo.size());
+                }});
+                current = current.plusMonths(1);
+            }
+        } else {
+            LocalDate current = fechaInicio;
+            while (!current.isAfter(fechaFin)) {
+                String key = current.format(DATE_FMT);
+                List<Venta> delDia = porPeriodo.getOrDefault(key, List.of());
+                BigDecimal totalDia = delDia.stream().map(Venta::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+                ventasPorDia.add(new ReporteVentasDTO.VentaPorDiaDTO() {{
+                    setFecha(key);
+                    setTotal(totalDia);
+                    setTransacciones(delDia.size());
+                }});
+                current = current.plusDays(1);
+            }
         }
 
         // Por forma de pago
@@ -116,10 +163,26 @@ public class ReporteService {
                 }})
                 .collect(Collectors.toList());
 
+        // Ganancias del período (venta − compra por unidad)
+        List<Venta> ventasConDetalles = ventaRepository.findByFechaBetweenWithDetalles(desde, hasta);
+        BigDecimal ganancias = BigDecimal.ZERO;
+        for (Venta v : ventasConDetalles) {
+            if (v.getEstado() != Venta.Estado.COMPLETADA) continue;
+            for (DetalleVenta d : v.getDetalles()) {
+                if (d.getProducto() != null && d.getPrecioUnitario() != null && d.getCantidad() != null) {
+                    BigDecimal costo = d.getProducto().getPrecioCompra() != null
+                            ? d.getProducto().getPrecioCompra() : BigDecimal.ZERO;
+                    BigDecimal margen = d.getPrecioUnitario().subtract(costo);
+                    ganancias = ganancias.add(margen.multiply(BigDecimal.valueOf(d.getCantidad())));
+                }
+            }
+        }
+
         ReporteVentasDTO dto = new ReporteVentasDTO();
         dto.setTotalVentas(totalVentas);
         dto.setTotalTransacciones(transacciones);
         dto.setTicketPromedio(ticketPromedio);
+        dto.setGanancias(ganancias);
         dto.setVentasPorDia(ventasPorDia);
         dto.setVentasPorFormaPago(porFormaPago);
         return dto;

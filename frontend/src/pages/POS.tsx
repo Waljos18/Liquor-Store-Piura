@@ -5,10 +5,11 @@ import { Input } from '../components/ui/Input';
 import { Search, Trash2, Plus, Minus, ShoppingCart } from 'lucide-react';
 import {
   buscarProductos,
+  buscarPacks,
   crearVenta,
-  fetchCategorias,
   fetchClientes,
   type ProductoDTO,
+  type PackDTO,
   type CrearVentaItem,
   type ClienteDTO,
 } from '../api/api';
@@ -36,6 +37,7 @@ const IGV = 0.18;
 export const POS = () => {
   const [search, setSearch] = useState('');
   const [productos, setProductos] = useState<ProductoDTO[]>([]);
+  const [packs, setPacks] = useState<PackDTO[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cliente, setCliente] = useState<ClienteDTO | null>(null);
   const [clienteSearch, setClienteSearch] = useState('');
@@ -58,11 +60,17 @@ export const POS = () => {
   const loadProductos = useCallback(async () => {
     if (search.length < 2) {
       setProductos([]);
+      setPacks([]);
       return;
     }
-    const res = await buscarProductos(search);
-    if (res.success && res.data) setProductos(res.data);
+    const [prodRes, packRes] = await Promise.all([
+      buscarProductos(search),
+      buscarPacks(search),
+    ]);
+    if (prodRes.success && prodRes.data) setProductos(prodRes.data);
     else setProductos([]);
+    if (packRes.success && packRes.data) setPacks(packRes.data);
+    else setPacks([]);
   }, [search]);
 
   useEffect(() => {
@@ -103,6 +111,24 @@ export const POS = () => {
     });
     setSearch('');
     setProductos([]);
+    setPacks([]);
+    setError(null);
+  };
+
+  const addPackToCart = (pack: PackDTO) => {
+    const precio = pack.precioPack ?? 0;
+    setCart((prev) => {
+      const idx = prev.findIndex((c) => c.packId === pack.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = { ...copy[idx], cantidad: copy[idx].cantidad + 1 };
+        return copy;
+      }
+      return [...prev, { packId: pack.id, packNombre: pack.nombre, cantidad: 1, precioUnitario: precio }];
+    });
+    setSearch('');
+    setProductos([]);
+    setPacks([]);
     setError(null);
   };
 
@@ -198,22 +224,33 @@ export const POS = () => {
             </CardContent>
           </Card>
 
-          {productos.length > 0 && (
+          {(productos.length > 0 || packs.length > 0) && (
             <Card>
               <CardHeader>
-                <CardTitle>Resultados</CardTitle>
+                <CardTitle>Resultados (productos y packs/promociones)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {productos.map((p) => (
                     <button
-                      key={p.id}
+                      key={`p-${p.id}`}
                       onClick={() => addToCart(p)}
                       className="p-3 border border-border rounded hover:bg-background text-left"
                     >
                       <p className="font-medium truncate">{p.nombre}</p>
                       <p className="text-sm text-primary font-bold">S/ {p.precioVenta?.toFixed(2)}</p>
                       <p className="text-xs text-text-secondary">Stock: {p.stockActual}</p>
+                    </button>
+                  ))}
+                  {packs.map((pack) => (
+                    <button
+                      key={`pack-${pack.id}`}
+                      onClick={() => addPackToCart(pack)}
+                      className="p-3 border border-primary/30 rounded hover:bg-primary/5 text-left"
+                    >
+                      <span className="text-xs bg-primary/20 text-primary px-1 rounded mr-1">Pack</span>
+                      <p className="font-medium truncate">{pack.nombre}</p>
+                      <p className="text-sm text-primary font-bold">S/ {(pack.precioPack ?? 0).toFixed(2)}</p>
                     </button>
                   ))}
                 </div>

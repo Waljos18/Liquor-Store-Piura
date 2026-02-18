@@ -22,7 +22,10 @@ const formatDate = (d: string) => {
   return `${day}/${m}`;
 };
 
-const formatSoles = (n: number) => `S/ ${(n ?? 0).toFixed(2)}`;
+const formatSoles = (n: number | string | undefined | null): string => {
+  const num = typeof n === 'number' && !Number.isNaN(n) ? n : Number(n);
+  return `S/ ${(Number.isNaN(num) ? 0 : num).toFixed(2)}`;
+};
 
 export const Dashboard = () => {
   const [dashboard, setDashboard] = useState<{
@@ -36,7 +39,9 @@ export const Dashboard = () => {
   const [reporteVentas, setReporteVentas] = useState<{
     ventasPorDia: { fecha: string; total: number; transacciones: number }[];
     totalVentas: number;
+    totalTransacciones: number;
     ticketPromedio: number;
+    ganancias?: number;
   } | null>(null);
   const [productosMasVendidos, setProductosMasVendidos] = useState<
     { nombreProducto: string; cantidadVendida: number; totalVentas: number }[]
@@ -70,10 +75,12 @@ export const Dashboard = () => {
 
     async function load() {
       setLoading(true);
+      const fechas = getFechas();
+      const agrupacion = periodo === 'hoy' ? 'DIA' : periodo === 'semana' ? 'SEMANA' : 'MES';
       const [dashRes, repRes, prodRes, stockRes] = await Promise.all([
         fetchDashboard(),
-        fetchReporteVentas(getFechas().inicio, getFechas().fin),
-        fetchProductosMasVendidos(getFechas().inicio, getFechas().fin, 5),
+        fetchReporteVentas(fechas.inicio, fechas.fin, agrupacion),
+        fetchProductosMasVendidos(fechas.inicio, fechas.fin, 5),
         fetchStockBajo(),
       ]);
 
@@ -84,7 +91,9 @@ export const Dashboard = () => {
         setReporteVentas({
           ventasPorDia: repRes.data.ventasPorDia,
           totalVentas: repRes.data.totalVentas,
+          totalTransacciones: repRes.data.totalTransacciones ?? 0,
           ticketPromedio: repRes.data.ticketPromedio,
+          ganancias: repRes.data.ganancias,
         });
       }
       if (prodRes.success && prodRes.data)
@@ -99,18 +108,32 @@ export const Dashboard = () => {
     return () => { cancelled = true; };
   }, [periodo]);
 
+  const ventasLabel = periodo === 'hoy' ? 'Ventas hoy' : periodo === 'semana' ? 'Ventas de la semana' : 'Ventas del mes';
+  const ventasValue = periodo === 'hoy'
+    ? (dashboard != null ? formatSoles(dashboard.ventasHoy) : '-')
+    : (reporteVentas != null ? formatSoles(reporteVentas.totalVentas) : '-');
+  const ventasSub = periodo === 'hoy'
+    ? `${dashboard?.transaccionesHoy ?? 0} transacciones`
+    : `${reporteVentas?.totalTransacciones ?? 0} transacciones`;
+
+  const segundaLabel = periodo === 'hoy' ? 'Ganancias hoy' : periodo === 'semana' ? 'Ganancias de la semana' : 'Ganancias del mes';
+  const segundaValue = periodo === 'hoy'
+    ? (dashboard != null ? formatSoles(dashboard.gananciasHoy) : '-')
+    : (reporteVentas != null ? formatSoles(reporteVentas.ganancias) : '-');
+  const segundaSub = 'Venta − Compra';
+
   const stats = [
     {
-      label: 'Ventas Hoy',
-      value: dashboard ? formatSoles(dashboard.ventasHoy) : '-',
-      sub: `${dashboard?.transaccionesHoy ?? 0} transacciones`,
+      label: ventasLabel,
+      value: ventasValue,
+      sub: ventasSub,
       icon: DollarSign,
       color: 'text-green-500',
     },
     {
-      label: 'Ganancias Hoy',
-      value: dashboard != null && dashboard.gananciasHoy != null ? formatSoles(dashboard.gananciasHoy) : '-',
-      sub: 'Venta − Compra',
+      label: segundaLabel,
+      value: segundaValue,
+      sub: segundaSub,
       icon: DollarSign,
       color: 'text-emerald-600',
     },
@@ -178,7 +201,9 @@ export const Dashboard = () => {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Ventas por Día</CardTitle>
+                <CardTitle>
+                  {periodo === 'hoy' ? 'Ventas hoy' : periodo === 'semana' ? 'Ventas por semana' : 'Ventas por mes'}
+                </CardTitle>
               </CardHeader>
               <CardContent className="h-64">
                 {reporteVentas?.ventasPorDia?.length ? (

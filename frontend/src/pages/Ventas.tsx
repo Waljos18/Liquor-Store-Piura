@@ -82,7 +82,11 @@ export const Ventas = () => {
     const fechaHasta = hoy.toISOString().slice(0, 19) + 'Z';
     const res = await fetchVentas({ fechaDesde, fechaHasta, size: 100 });
     if (res.success && res.data) {
-      const list = res.data.content ?? [];
+      const list = (res.data.content ?? []).slice().sort((a, b) => {
+        const da = new Date(a.fecha ?? 0).getTime();
+        const db = new Date(b.fecha ?? 0).getTime();
+        return db - da;
+      });
       setVentas(list);
       await loadComprobantes(list);
     } else if (!res.success) {

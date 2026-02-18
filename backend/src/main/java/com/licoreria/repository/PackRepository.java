@@ -18,4 +18,7 @@ public interface PackRepository extends JpaRepository<Pack, Long> {
     /** Packs que contienen el producto dado (para equivalencia stock → packs) */
     @Query("SELECT DISTINCT p FROM Pack p JOIN FETCH p.productos pp WHERE pp.producto.id = :productoId AND p.activo = true")
     List<Pack> findPacksContainingProducto(@Param("productoId") Long productoId);
+
+    @Query("SELECT p FROM Pack p WHERE p.activo = true AND LOWER(p.nombre) LIKE LOWER(CONCAT('%', :q, '%'))")
+    List<Pack> buscarParaPos(@Param("q") String q);
 }

@@ -37,4 +37,6 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
     boolean existsByCodigoBarras(String codigoBarras);
 
     List<Producto> findByCategoriaId(Long categoriaId);
+
+    List<Producto> findByCategoriaIsNullAndActivoTrue();
 }

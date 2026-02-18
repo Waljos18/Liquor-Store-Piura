@@ -84,6 +84,7 @@ export interface ReporteVentas {
   totalVentas: number;
   totalTransacciones: number;
   ticketPromedio: number;
+  ganancias?: number;
   ventasPorDia: VentaPorDia[];
   ventasPorFormaPago: { formaPago: string; total: number; cantidad: number }[];
 }
@@ -153,6 +154,10 @@ export interface ProductoDTO {
   fechaVencimiento?: string;
   imagen?: string;
   activo: boolean;
+}
+
+export async function fetchProductosSinCategoria(): Promise<ApiResponse<ProductoDTO[]>> {
+  return request<ProductoDTO[]>('/api/v1/productos/sin-categoria');
 }
 
 export async function fetchProductos(params?: {
@@ -643,6 +648,11 @@ export interface CrearPackRequest {
   nombre: string;
   precioPack: number;
   productos: { productoId: number; cantidad: number }[];
+}
+
+export async function buscarPacks(q: string): Promise<ApiResponse<PackDTO[]>> {
+  if (!q || q.length < 2) return { success: true, data: [] };
+  return request<PackDTO[]>(`/api/v1/packs/buscar?q=${encodeURIComponent(q)}`);
 }
 
 export async function fetchPacks(params?: { soloActivos?: boolean; page?: number; size?: number }): Promise<ApiResponse<{ content: PackDTO[]; totalElements: number }>> {

@@ -37,6 +37,12 @@ public class ProductoService {
     }
 
     @Transactional(readOnly = true)
+    public ApiResponse<List<ProductoDTO>> listarSinCategoria() {
+        List<Producto> list = productoRepository.findByCategoriaIsNullAndActivoTrue();
+        return ApiResponse.ok(list.stream().map(this::toDto).collect(Collectors.toList()));
+    }
+
+    @Transactional(readOnly = true)
     public ApiResponse<ProductoDTO> obtenerPorId(Long id) {
         return productoRepository.findById(id)
                 .map(p -> ApiResponse.ok(toDto(p)))

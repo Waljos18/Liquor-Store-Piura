@@ -23,6 +23,12 @@ public class PackController {
 
     private final PackService packService;
 
+    @GetMapping("/buscar")
+    @Operation(summary = "Buscar packs para POS", description = "Búsqueda rápida por nombre para punto de venta")
+    public ResponseEntity<ApiResponse<java.util.List<PackDTO>>> buscar(@RequestParam("q") String q) {
+        return ResponseEntity.ok(packService.buscarParaPos(q));
+    }
+
     @GetMapping
     @Operation(summary = "Listar packs", description = "Lista packs con filtro opcional de solo activos")
     public ResponseEntity<ApiResponse<Page<PackDTO>>> listar(

@@ -38,6 +38,12 @@ public class ProductoController {
         return ResponseEntity.ok(productoService.listar(search, categoriaId, activo, stockBajo, pageable));
     }
 
+    @GetMapping("/sin-categoria")
+    @Operation(summary = "Listar productos sin categoría")
+    public ResponseEntity<ApiResponse<List<ProductoDTO>>> listarSinCategoria() {
+        return ResponseEntity.ok(productoService.listarSinCategoria());
+    }
+
     @GetMapping("/buscar")
     @Operation(summary = "Búsqueda rápida para POS (código o nombre)")
     public ResponseEntity<ApiResponse<List<ProductoDTO>>> buscar(@RequestParam("q") String q) {

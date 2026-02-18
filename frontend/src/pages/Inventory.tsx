@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { AlertTriangle, Plus, ShoppingCart, BarChart2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Plus, ShoppingCart, BarChart2, RefreshCw, Search } from 'lucide-react';
 import {
   fetchStockBajo,
   fetchProximosVencer,
@@ -52,6 +52,18 @@ export const Inventory = () => {
   const [proveedores, setProveedores] = useState<ProveedorDTO[]>([]);
   const [compraSaving, setCompraSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchStockBajo, setSearchStockBajo] = useState('');
+
+  const stockBajoFiltrado = useMemo(() => {
+    if (!searchStockBajo.trim()) return stockBajo;
+    const q = searchStockBajo.trim().toLowerCase();
+    return stockBajo.filter(
+      (p) =>
+        (p.nombre?.toLowerCase().includes(q)) ||
+        (p.codigoBarras?.toLowerCase().includes(q))
+    );
+  }, [stockBajo, searchStockBajo]);
+
   const load = async () => {
     setLoading(true);
     const [stockRes, proximosRes, movRes] = await Promise.all([
@@ -200,7 +212,7 @@ export const Inventory = () => {
               }}
             >
               <option value="">Seleccione para ajustar o reabastecer</option>
-              {stockBajo.map((p) => (
+              {stockBajoFiltrado.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.nombre} (Stock: {p.stockActual} / Mín: {p.stockMinimo ?? 0})
                 </option>
@@ -244,10 +256,22 @@ export const Inventory = () => {
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Productos con Stock Bajo</CardTitle>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <CardTitle>Productos con Stock Bajo</CardTitle>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
+                    <input
+                      type="text"
+                      placeholder="Buscar por nombre o código..."
+                      value={searchStockBajo}
+                      onChange={(e) => setSearchStockBajo(e.target.value)}
+                      className="pl-8 pr-3 py-1.5 border border-border rounded text-sm w-full sm:w-52"
+                    />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                {stockBajo.length > 0 ? (
+                {stockBajoFiltrado.length > 0 ? (
                   <table className="w-full text-sm text-left">
                     <thead>
                       <tr className="border-b border-border">
@@ -258,7 +282,7 @@ export const Inventory = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {stockBajo.map((p) => {
+                      {stockBajoFiltrado.map((p) => {
                         const min = p.stockMinimo ?? 0;
                         const faltante = Math.max(0, min - p.stockActual);
                         return (
@@ -273,7 +297,9 @@ export const Inventory = () => {
                     </tbody>
                   </table>
                 ) : (
-                  <p className="text-text-secondary py-4">No hay productos con stock bajo</p>
+                  <p className="text-text-secondary py-4">
+                    {stockBajo.length > 0 ? 'No hay resultados para la búsqueda' : 'No hay productos con stock bajo'}
+                  </p>
                 )}
               </CardContent>
             </Card>
