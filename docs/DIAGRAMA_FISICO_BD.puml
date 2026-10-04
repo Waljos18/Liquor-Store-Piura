@@ -1,0 +1,384 @@
+@startuml
+!theme plain
+title Diagrama Fisico de Base de Datos\nSistema POS/ERP - Licoreria Chilalo
+
+left to right direction
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam defaultFontName Consolas
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #444444
+  ArrowColor #666666
+}
+
+entity "USUARIOS" as usuarios {
+  * id : BIGSERIAL <<PK>>
+  --
+  username : VARCHAR(50) <<UK>>
+  email : VARCHAR(100) <<UK>>
+  password : VARCHAR(255)
+  nombre : VARCHAR(100)
+  rol : VARCHAR(20)
+  activo : BOOLEAN
+  fecha_creacion : TIMESTAMP
+}
+
+entity "CLIENTES" as clientes {
+  * id : BIGSERIAL <<PK>>
+  --
+  tipo_documento : VARCHAR(10)
+  numero_documento : VARCHAR(20) <<UK>>
+  nombre : VARCHAR(200)
+  telefono : VARCHAR(20)
+  email : VARCHAR(100)
+  puntos_fidelizacion : INTEGER
+  fecha_creacion : TIMESTAMP
+}
+
+entity "CATEGORIAS" as categorias {
+  * id : BIGSERIAL <<PK>>
+  --
+  nombre : VARCHAR(100) <<UK>>
+  descripcion : TEXT
+  activa : BOOLEAN
+  fecha_creacion : TIMESTAMP
+}
+
+entity "PRODUCTOS" as productos {
+  * id : BIGSERIAL <<PK>>
+  --
+  codigo_barras : VARCHAR(50) <<UK>>
+  nombre : VARCHAR(200)
+  marca : VARCHAR(100)
+  categoria_id : BIGINT <<FK>>
+  precio_compra : DECIMAL(10,2)
+  precio_venta : DECIMAL(10,2)
+  stock_actual : INTEGER
+  stock_minimo : INTEGER
+  stock_maximo : INTEGER
+  fecha_vencimiento : DATE
+  imagen : VARCHAR(255)
+  activo : BOOLEAN
+  fecha_creacion : TIMESTAMP
+  fecha_actualizacion : TIMESTAMP
+}
+
+entity "VENTAS" as ventas {
+  * id : BIGSERIAL <<PK>>
+  --
+  numero_venta : VARCHAR(20) <<UK>>
+  fecha : TIMESTAMP
+  usuario_id : BIGINT <<FK>>
+  cliente_id : BIGINT <<FK>>
+  subtotal : DECIMAL(10,2)
+  descuento : DECIMAL(10,2)
+  impuesto : DECIMAL(10,2)
+  total : DECIMAL(10,2)
+  forma_pago : VARCHAR(20)
+  estado : VARCHAR(20)
+  observaciones : TEXT
+  fecha_creacion : TIMESTAMP
+}
+
+entity "DETALLE_VENTAS" as detalle_ventas {
+  * id : BIGSERIAL <<PK>>
+  --
+  venta_id : BIGINT <<FK>>
+  producto_id : BIGINT <<FK>>
+  pack_id : BIGINT <<FK>>
+  cantidad : INTEGER
+  precio_unitario : DECIMAL(10,2)
+  descuento : DECIMAL(10,2)
+  subtotal : DECIMAL(10,2)
+}
+
+entity "VENTA_PAGOS" as venta_pagos {
+  * id : BIGSERIAL <<PK>>
+  --
+  venta_id : BIGINT <<FK>>
+  metodo_pago : VARCHAR(20)
+  monto : DECIMAL(10,2)
+  referencia : VARCHAR(100)
+}
+
+entity "COMPROBANTES_ELECTRONICOS" as comprobantes {
+  * id : BIGSERIAL <<PK>>
+  --
+  venta_id : BIGINT <<FK>>
+  tipo_comprobante : VARCHAR(10)
+  serie : VARCHAR(10)
+  numero : VARCHAR(20)
+  xml_enviado : TEXT
+  pdf_generado : BYTEA
+  estado_sunat : VARCHAR(20)
+  fecha_emision : TIMESTAMP
+  --
+  UNIQUE (serie, numero)
+}
+
+entity "PROVEEDORES" as proveedores {
+  * id : BIGSERIAL <<PK>>
+  --
+  razon_social : VARCHAR(200)
+  ruc : VARCHAR(20) <<UK>>
+  direccion : TEXT
+  telefono : VARCHAR(20)
+  email : VARCHAR(100)
+  activo : BOOLEAN
+  fecha_creacion : TIMESTAMP
+}
+
+entity "COMPRAS" as compras {
+  * id : BIGSERIAL <<PK>>
+  --
+  numero_compra : VARCHAR(20) <<UK>>
+  proveedor_id : BIGINT <<FK>>
+  fecha : TIMESTAMP
+  total : DECIMAL(10,2)
+  usuario_id : BIGINT <<FK>>
+  estado : VARCHAR(20)
+  observaciones : TEXT
+  fecha_recepcion : TIMESTAMP
+}
+
+entity "DETALLE_COMPRAS" as detalle_compras {
+  * id : BIGSERIAL <<PK>>
+  --
+  compra_id : BIGINT <<FK>>
+  producto_id : BIGINT <<FK>>
+  cantidad : INTEGER
+  precio_unitario : DECIMAL(10,2)
+  subtotal : DECIMAL(10,2)
+  cantidad_recibida : INTEGER
+}
+
+entity "MOVIMIENTOS_INVENTARIO" as movimientos {
+  * id : BIGSERIAL <<PK>>
+  --
+  producto_id : BIGINT <<FK>>
+  tipo_movimiento : VARCHAR(20)
+  cantidad : INTEGER
+  motivo : VARCHAR(200)
+  usuario_id : BIGINT <<FK>>
+  venta_id : BIGINT <<FK>>
+  compra_id : BIGINT <<FK>>
+  fecha : TIMESTAMP
+}
+
+entity "PROMOCIONES" as promociones {
+  * id : BIGSERIAL <<PK>>
+  --
+  nombre : VARCHAR(200)
+  tipo : VARCHAR(20)
+  descuento_porcentaje : DECIMAL(5,2)
+  descuento_monto : DECIMAL(10,2)
+  fecha_inicio : TIMESTAMP
+  fecha_fin : TIMESTAMP
+  activa : BOOLEAN
+  fecha_creacion : TIMESTAMP
+}
+
+entity "PROMOCION_PRODUCTOS" as promocion_productos {
+  * id : BIGSERIAL <<PK>>
+  --
+  promocion_id : BIGINT <<FK>>
+  producto_id : BIGINT <<FK>>
+  cantidad_minima : INTEGER
+  cantidad_gratis : INTEGER
+}
+
+entity "PACKS" as packs {
+  * id : BIGSERIAL <<PK>>
+  --
+  nombre : VARCHAR(200)
+  precio_pack : DECIMAL(10,2)
+  activo : BOOLEAN
+  fecha_creacion : TIMESTAMP
+}
+
+entity "PACK_PRODUCTOS" as pack_productos {
+  * id : BIGSERIAL <<PK>>
+  --
+  pack_id : BIGINT <<FK>>
+  producto_id : BIGINT <<FK>>
+  cantidad : INTEGER
+}
+
+entity "DEVOLUCIONES" as devoluciones {
+  * id : BIGSERIAL <<PK>>
+  --
+  numero_devolucion : VARCHAR(20) <<UK>>
+  venta_id : BIGINT <<FK>>
+  usuario_id : BIGINT <<FK>>
+  motivo : VARCHAR(50)
+  estado : VARCHAR(20)
+  observaciones : TEXT
+  total : DECIMAL(10,2)
+  fecha_creacion : TIMESTAMP
+}
+
+entity "DETALLE_DEVOLUCIONES" as detalle_devoluciones {
+  * id : BIGSERIAL <<PK>>
+  --
+  devolucion_id : BIGINT <<FK>>
+  producto_id : BIGINT <<FK>>
+  cantidad : INTEGER
+  precio_unitario : DECIMAL(10,2)
+  subtotal : DECIMAL(10,2)
+}
+
+entity "CUENTAS_POR_COBRAR" as cuentas_por_cobrar {
+  * id : BIGSERIAL <<PK>>
+  --
+  venta_id : BIGINT <<FK>> <<UK>>
+  cliente_id : BIGINT <<FK>>
+  monto_total : DECIMAL(10,2)
+  monto_pagado : DECIMAL(10,2)
+  saldo_pendiente : DECIMAL(10,2)
+  estado : VARCHAR(20)
+  fecha_vencimiento : DATE
+  fecha_creacion : TIMESTAMP
+}
+
+entity "PAGOS_CUENTA" as pagos_cuenta {
+  * id : BIGSERIAL <<PK>>
+  --
+  cuenta_id : BIGINT <<FK>>
+  monto : DECIMAL(10,2)
+  fecha : TIMESTAMP
+  usuario_id : BIGINT <<FK>>
+  forma_pago : VARCHAR(20)
+  observaciones : TEXT
+}
+
+entity "APERTURAS_CAJA" as aperturas_caja {
+  * id : BIGSERIAL <<PK>>
+  --
+  fecha : DATE
+  hora_apertura : TIMESTAMP
+  hora_cierre : TIMESTAMP
+  monto_inicial : DECIMAL(10,2)
+  monto_cierre : DECIMAL(10,2)
+  monto_real : DECIMAL(10,2)
+  sobrante_faltante : DECIMAL(10,2)
+  usuario_apertura_id : BIGINT <<FK>>
+  usuario_cierre_id : BIGINT <<FK>>
+  estado : VARCHAR(20)
+}
+
+entity "GASTOS" as gastos {
+  * id : BIGSERIAL <<PK>>
+  --
+  descripcion : VARCHAR(255)
+  categoria : VARCHAR(50)
+  monto : DECIMAL(10,2)
+  fecha : DATE
+  comprobante : VARCHAR(100)
+  observaciones : TEXT
+  usuario_id : BIGINT <<FK>>
+  fecha_creacion : TIMESTAMP
+}
+
+entity "MERMAS" as mermas {
+  * id : BIGSERIAL <<PK>>
+  --
+  producto_id : BIGINT <<FK>>
+  cantidad : INTEGER
+  motivo : VARCHAR(50)
+  descripcion : TEXT
+  valor_perdida : DECIMAL(10,2)
+  fecha : TIMESTAMP
+  usuario_id : BIGINT <<FK>>
+  fecha_creacion : TIMESTAMP
+}
+
+entity "CONFIG_FIDELIZACION" as config_fidelizacion {
+  * id : BIGSERIAL <<PK>>
+  --
+  soles_por_punto : DECIMAL(10,2)
+  puntos_sol_descuento : DECIMAL
+  max_puntos_canje : INTEGER
+  min_compra_canje : DECIMAL(10,2)
+  activo : BOOLEAN
+  fecha_actualizacion : TIMESTAMP
+}
+
+entity "PUNTOS_MOVIMIENTOS" as puntos_movimientos {
+  * id : BIGSERIAL <<PK>>
+  --
+  cliente_id : BIGINT <<FK>>
+  tipo : VARCHAR(20)
+  cantidad : INTEGER
+  saldo_despues : INTEGER
+  venta_id : BIGINT <<FK>>
+  motivo : VARCHAR(200)
+  usuario_id : BIGINT <<FK>>
+  fecha : TIMESTAMP
+}
+
+entity "PASSWORD_RESET_TOKENS" as password_reset_tokens {
+  * id : BIGSERIAL <<PK>>
+  --
+  token : VARCHAR(255) <<UK>>
+  usuario_id : BIGINT <<FK>>
+  expira_en : TIMESTAMP
+  usado : BOOLEAN
+  creado_en : TIMESTAMP
+}
+
+categorias ||--o{ productos : categoria_id
+usuarios ||--o{ ventas : usuario_id
+clientes ||--o{ ventas : cliente_id
+ventas ||--o{ detalle_ventas : venta_id
+productos ||--o{ detalle_ventas : producto_id
+packs ||--o{ detalle_ventas : pack_id
+ventas ||--o{ venta_pagos : venta_id
+ventas ||--o{ comprobantes : venta_id
+
+proveedores ||--o{ compras : proveedor_id
+usuarios ||--o{ compras : usuario_id
+compras ||--o{ detalle_compras : compra_id
+productos ||--o{ detalle_compras : producto_id
+
+productos ||--o{ movimientos : producto_id
+usuarios ||--o{ movimientos : usuario_id
+ventas ||--o{ movimientos : venta_id
+compras ||--o{ movimientos : compra_id
+
+promociones ||--o{ promocion_productos : promocion_id
+productos ||--o{ promocion_productos : producto_id
+packs ||--o{ pack_productos : pack_id
+productos ||--o{ pack_productos : producto_id
+
+ventas ||--o{ devoluciones : venta_id
+usuarios ||--o{ devoluciones : usuario_id
+devoluciones ||--o{ detalle_devoluciones : devolucion_id
+productos ||--o{ detalle_devoluciones : producto_id
+
+ventas ||--|| cuentas_por_cobrar : venta_id
+clientes ||--o{ cuentas_por_cobrar : cliente_id
+cuentas_por_cobrar ||--o{ pagos_cuenta : cuenta_id
+usuarios ||--o{ pagos_cuenta : usuario_id
+
+usuarios ||--o{ aperturas_caja : usuario_apertura_id
+usuarios ||--o{ aperturas_caja : usuario_cierre_id
+usuarios ||--o{ gastos : usuario_id
+productos ||--o{ mermas : producto_id
+usuarios ||--o{ mermas : usuario_id
+
+clientes ||--o{ puntos_movimientos : cliente_id
+ventas ||--o{ puntos_movimientos : venta_id
+usuarios ||--o{ puntos_movimientos : usuario_id
+
+usuarios ||--o{ password_reset_tokens : usuario_id
+
+note bottom of config_fidelizacion
+  Tabla parametrica global.
+  No depende de otra entidad.
+end note
+
+@enduml

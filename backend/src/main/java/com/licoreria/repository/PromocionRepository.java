@@ -20,6 +20,10 @@ public interface PromocionRepository extends JpaRepository<Promocion, Long> {
            "p.fechaInicio <= :fechaActual AND p.fechaFin >= :fechaActual")
     List<Promocion> findPromocionesActivas(@Param("fechaActual") LocalDateTime fechaActual);
 
+    @Query("SELECT p FROM Promocion p WHERE p.activa = true AND " +
+           "p.fechaInicio <= :fechaActual AND p.fechaFin >= :fechaActual")
+    Page<Promocion> findPromocionesActivasConFecha(@Param("fechaActual") LocalDateTime fechaActual, Pageable pageable);
+
     @Query("SELECT p FROM Promocion p JOIN p.productos pp WHERE " +
            "pp.producto.id = :productoId AND p.activa = true AND " +
            "p.fechaInicio <= :fechaActual AND p.fechaFin >= :fechaActual")

@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Plus, Search, Edit2, Trash2, Upload } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Upload, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import {
   fetchProductos,
   fetchCategorias,
   crearProducto,
   actualizarProducto,
   eliminarProducto,
+  eliminarProductosBulk,
   importarProductosCSV,
   type ProductoDTO,
   type CategoriaDTO,
@@ -23,13 +25,15 @@ const emptyForm = {
   precioCompra: '',
   precioVenta: '',
   stockInicial: '0',
-  stockMinimo: '0',
+  stockMinimo: '',
   stockMaximo: '',
   fechaVencimiento: '',
   activo: true,
 };
 
 export const Products = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.rol === 'ADMIN';
   const [items, setItems] = useState<ProductoDTO[]>([]);
   const [categorias, setCategorias] = useState<CategoriaDTO[]>([]);
   const [totalElements, setTotalElements] = useState(0);
@@ -46,8 +50,11 @@ export const Products = () => {
   const [error, setError] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
   const [resultadoImportacion, setResultadoImportacion] = useState<ImportarProductosResult | null>(null);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [eliminandoBulk, setEliminandoBulk] = useState(false);
 
   const load = async () => {
+    setSelected(new Set());
     setLoading(true);
     const [prodRes, catRes] = await Promise.all([
       fetchProductos({
@@ -55,6 +62,7 @@ export const Products = () => {
         categoriaId: categoriaId || undefined,
         page,
         size,
+        activo: true,
       }),
       fetchCategorias(false),
     ]);
@@ -106,6 +114,11 @@ export const Products = () => {
       setError('Precio de venta debe ser un número válido');
       return;
     }
+    const stockMinimoVal = parseInt(form.stockMinimo, 10);
+    if (isNaN(stockMinimoVal) || stockMinimoVal < 1) {
+      setError('El stock mínimo es obligatorio y debe ser al menos 1');
+      return;
+    }
     setSaving(true);
     setError(null);
     const dto: Partial<ProductoDTO> = {
@@ -129,7 +142,7 @@ export const Products = () => {
         setError(res.error?.message ?? 'Error al actualizar');
       }
     } else {
-      dto.stockInicial = form.stockInicial ? parseInt(form.stockInicial, 10) : 0;
+      (dto as Record<string, unknown>).stockInicial = form.stockInicial ? parseInt(form.stockInicial, 10) : 0;
       const res = await crearProducto(dto);
       if (res.success) {
         setModalOpen(false);
@@ -172,6 +185,46 @@ export const Products = () => {
     }
   };
 
+  const allPageSelected = items.length > 0 && items.every((p) => selected.has(p.id));
+  const someSelected = selected.size > 0;
+
+  const toggleOne = (id: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allPageSelected) {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        items.forEach((p) => next.delete(p.id));
+        return next;
+      });
+    } else {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        items.forEach((p) => next.add(p.id));
+        return next;
+      });
+    }
+  };
+
+  const eliminarSeleccionados = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`¿Desactivar ${selected.size} producto(s) seleccionado(s)?`)) return;
+    setEliminandoBulk(true);
+    const res = await eliminarProductosBulk(Array.from(selected));
+    setEliminandoBulk(false);
+    if (res.success) {
+      load();
+    } else {
+      alert(res.error?.message ?? 'Error al eliminar');
+    }
+  };
+
   const totalPages = Math.max(1, Math.ceil(totalElements / size));
 
   return (
@@ -199,27 +252,53 @@ export const Products = () => {
               <option key={c.id} value={c.id}>{c.nombre}</option>
             ))}
           </select>
-          <input
-            ref={importarRef}
-            type="file"
-            accept=".csv"
-            className="hidden"
-            onChange={importarDesdeArchivo}
-          />
-          <Button
-            variant="outline"
-            onClick={() => importarRef.current?.click()}
-            disabled={importando}
-          >
-            <Upload size={18} className="mr-2" />
-            {importando ? 'Importando...' : 'Importar CSV'}
-          </Button>
-          <Button onClick={openNew}>
-            <Plus size={18} className="mr-2" />
-            Nuevo Producto
-          </Button>
+          {isAdmin && (
+            <>
+              <input
+                ref={importarRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={importarDesdeArchivo}
+              />
+              <Button
+                variant="outline"
+                onClick={() => importarRef.current?.click()}
+                disabled={importando}
+              >
+                <Upload size={18} className="mr-2" />
+                {importando ? 'Importando...' : 'Importar CSV'}
+              </Button>
+              <Button onClick={openNew}>
+                <Plus size={18} className="mr-2" />
+                Nuevo Producto
+              </Button>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Barra de selección múltiple */}
+      {isAdmin && someSelected && (
+        <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+          <span className="text-blue-800 font-medium">{selected.size} producto(s) seleccionado(s)</span>
+          <Button
+            size="sm"
+            className="bg-red-600 hover:bg-red-700 text-white"
+            onClick={eliminarSeleccionados}
+            disabled={eliminandoBulk}
+          >
+            <Trash2 size={14} className="mr-1.5" />
+            {eliminandoBulk ? 'Eliminando...' : 'Eliminar seleccionados'}
+          </Button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="ml-auto text-blue-600 hover:text-blue-800 flex items-center gap-1"
+          >
+            <X size={14} /> Limpiar selección
+          </button>
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-0 overflow-x-auto">
@@ -229,17 +308,41 @@ export const Products = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-border bg-background">
+                  {isAdmin && (
+                    <th className="p-4 w-10">
+                      <input
+                        type="checkbox"
+                        checked={allPageSelected}
+                        onChange={toggleAll}
+                        className="rounded border-border cursor-pointer"
+                        title="Seleccionar todos en esta página"
+                      />
+                    </th>
+                  )}
                   <th className="p-4 font-medium">Código</th>
                   <th className="p-4 font-medium">Nombre</th>
                   <th className="p-4 font-medium">Categoría</th>
                   <th className="p-4 font-medium">Precio</th>
                   <th className="p-4 font-medium">Stock</th>
-                  <th className="p-4 font-medium text-right">Acciones</th>
+                  {isAdmin && <th className="p-4 font-medium text-right">Acciones</th>}
                 </tr>
               </thead>
               <tbody>
                 {items.map((product) => (
-                  <tr key={product.id} className="border-b border-border last:border-0 hover:bg-surface">
+                  <tr
+                    key={product.id}
+                    className={`border-b border-border last:border-0 hover:bg-surface ${selected.has(product.id) ? 'bg-blue-50/60' : ''}`}
+                  >
+                    {isAdmin && (
+                      <td className="p-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(product.id)}
+                          onChange={() => toggleOne(product.id)}
+                          className="rounded border-border cursor-pointer"
+                        />
+                      </td>
+                    )}
                     <td className="p-4">{product.codigoBarras ?? '-'}</td>
                     <td className="p-4 font-medium">{product.nombre}</td>
                     <td className="p-4">
@@ -257,21 +360,23 @@ export const Products = () => {
                         {product.stockActual}
                       </span>
                     </td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(product)}>
-                          <Edit2 size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-error"
-                          onClick={() => eliminar(product)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </td>
+                    {isAdmin && (
+                      <td className="p-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(product)}>
+                            <Edit2 size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-error"
+                            onClick={() => eliminar(product)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -368,9 +473,9 @@ export const Products = () => {
                 />
               )}
               <Input
-                label="Stock mínimo"
+                label="Stock mínimo *"
                 type="number"
-                min="0"
+                min="1"
                 value={form.stockMinimo}
                 onChange={(e) => setForm((f) => ({ ...f, stockMinimo: e.target.value }))}
               />

@@ -1,0 +1,64 @@
+@startuml
+!theme plain
+title Arquitectura Simplificada del Sistema\nSistema POS/ERP Licoreria Chilalo
+
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam componentStyle rectangle
+skinparam package {
+  BorderColor #2F5597
+  FontStyle bold
+}
+skinparam database {
+  BorderColor #5D4037
+  BackgroundColor #FFF3E0
+}
+skinparam cloud {
+  BorderColor #6A1B9A
+  BackgroundColor #F3E5F5
+}
+
+actor "Administrador" as admin
+actor "Vendedor" as vendedor
+
+package "Clientes del Sistema" #E8F5E9 {
+  component "Sistema Web\nReact + Vite" as web
+  component "App Android POS\nKotlin + Compose" as android
+}
+
+package "Backend" #FFF8E1 {
+  component "API REST\nSpring Boot" as backend
+}
+
+package "Datos y Servicios" #E3F2FD {
+  database "PostgreSQL" as db
+  component "Servicio IA\nFastAPI" as ai
+}
+
+package "Servicios Externos" #FCE4EC {
+  cloud "SUNAT / OSE" as sunat
+  cloud "Correo SMTP" as smtp
+}
+
+admin --> web
+vendedor --> web
+vendedor --> android
+
+web --> backend : REST
+android --> backend : REST
+
+backend --> db : JPA / Hibernate
+backend --> ai : HTTP
+backend --> sunat : facturacion
+backend --> smtp : correos
+
+note bottom of backend
+  Modulos principales:
+  autenticacion, ventas, inventario,
+  compras, promociones, fidelizacion y reportes
+end note
+
+@enduml

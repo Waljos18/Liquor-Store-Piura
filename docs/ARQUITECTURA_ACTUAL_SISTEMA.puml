@@ -1,0 +1,131 @@
+@startuml
+!theme plain
+title Arquitectura Actual del Sistema\nSistema POS/ERP Licoreria Chilalo
+
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam componentStyle rectangle
+skinparam package {
+  BorderColor #2F5597
+  FontStyle bold
+}
+skinparam rectangle {
+  BorderColor #666666
+}
+skinparam database {
+  BorderColor #5D4037
+  BackgroundColor #FFF3E0
+}
+skinparam cloud {
+  BorderColor #6A1B9A
+  BackgroundColor #F3E5F5
+}
+
+actor "Administrador" as admin
+actor "Vendedor" as vendedor
+
+package "Capa de Presentacion" #E8F5E9 {
+  component "Frontend Web\nReact 18 + Vite + TypeScript\nTailwind CSS" as web
+  component "App Android POS\nKotlin + Jetpack Compose\nRetrofit + Hilt + CameraX" as android
+}
+
+package "Capa de Aplicacion" #FFF8E1 {
+  component "API Backend\nSpring Boot 3.2.5\nJava 17" as backend
+
+  package "Modulos Backend" #FFFDE7 {
+    component "Autenticacion\nJWT + Roles" as mod_auth
+    component "Ventas / POS" as mod_ventas
+    component "Inventario" as mod_inv
+    component "Compras" as mod_compras
+    component "Facturacion Electronica" as mod_fact
+    component "Promociones y Packs" as mod_promo
+    component "Fidelizacion" as mod_fidel
+    component "Reportes / Dashboard" as mod_report
+    component "Caja, Gastos y Mermas" as mod_ops
+    component "Recuperacion de clave\npor email" as mod_mail
+  }
+}
+
+package "Servicios de Datos" #E3F2FD {
+  database "PostgreSQL 15\nlicoreria_db" as db
+
+  package "Persistencia" #EAF4FF {
+    component "Controllers" as layer_ctrl
+    component "Services" as layer_srv
+    component "Repositories" as layer_repo
+    component "Entities + Flyway" as layer_data
+  }
+}
+
+package "Servicios Inteligentes" #E8EAF6 {
+  component "Servicio IA\nPython + FastAPI" as ai
+  component "Modelos ML\nRecomendaciones\nPrediccion de demanda" as ml
+}
+
+package "Integraciones Externas" #FCE4EC {
+  cloud "OSE / SUNAT\nSandbox / Produccion" as sunat
+  cloud "SMTP Gmail\nEnvio de correos" as smtp
+}
+
+admin --> web : usa panel web
+vendedor --> web : usa modulo POS web
+vendedor --> android : usa POS movil
+
+web --> backend : HTTPS / REST API
+android --> backend : HTTPS / REST API
+
+backend --> layer_ctrl
+layer_ctrl --> layer_srv
+layer_srv --> layer_repo
+layer_repo --> layer_data
+layer_data --> db : JPA / Hibernate\nFlyway migrations
+
+mod_auth -[hidden]-> mod_ventas
+mod_ventas -[hidden]-> mod_inv
+mod_inv -[hidden]-> mod_compras
+mod_compras -[hidden]-> mod_fact
+mod_fact -[hidden]-> mod_promo
+mod_promo -[hidden]-> mod_fidel
+mod_fidel -[hidden]-> mod_report
+mod_report -[hidden]-> mod_ops
+mod_ops -[hidden]-> mod_mail
+
+backend ..> mod_auth
+backend ..> mod_ventas
+backend ..> mod_inv
+backend ..> mod_compras
+backend ..> mod_fact
+backend ..> mod_promo
+backend ..> mod_fidel
+backend ..> mod_report
+backend ..> mod_ops
+backend ..> mod_mail
+
+mod_fact --> sunat : XML / PDF / CDR\nfacturacion electronica
+mod_mail --> smtp : reset de password
+mod_report --> ai : consulta analitica
+mod_ventas --> ai : recomendaciones
+ai --> ml : inferencia
+ai --> db : lectura historica\nentrenamiento / consulta
+
+note right of android
+  App nativa Android para POS.
+  Incluye escaneo de codigo
+  y soporte de sincronizacion
+  segun el alcance del proyecto.
+end note
+
+note bottom of backend
+  Arquitectura en capas:
+  Controller -> Service -> Repository -> Entity/DB
+end note
+
+note bottom of sunat
+  Integracion para boletas y facturas
+  electronicas mediante OSE.
+end note
+
+@enduml

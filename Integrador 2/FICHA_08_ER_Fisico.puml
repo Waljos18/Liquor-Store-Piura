@@ -1,0 +1,184 @@
+@startuml FICHA_08_Diagrama_ER_Fisico
+!theme plain
+top to bottom direction
+skinparam linetype ortho
+skinparam roundcorner 8
+skinparam entity {
+  BackgroundColor #F0F4FF
+  BorderColor #2563EB
+  FontColor #1E293B
+  FontSize 11
+}
+skinparam arrow {
+  Color #64748B
+  FontColor #475569
+  FontSize 9
+}
+hide circle
+
+title "Diagrama Entidad-Relación Físico — licoreria_db (PostgreSQL 15)\nSistema POS/ERP Licorería Chilalo — Piura"
+
+' ============================================================
+' ENTIDADES
+' ============================================================
+
+entity "usuarios" as usuarios {
+  * id : BIGSERIAL <<PK>>
+  --
+  * username : VARCHAR(50) <<UNIQUE>>
+  * email : VARCHAR(100) <<UNIQUE>>
+  * password : VARCHAR(255)
+  * nombre : VARCHAR(100)
+  * rol : VARCHAR(20) [ADMIN | VENDEDOR]
+  * activo : BOOLEAN
+  fecha_creacion : TIMESTAMP
+  fecha_actualizacion : TIMESTAMP
+}
+
+entity "categorias" as categorias {
+  * id : BIGSERIAL <<PK>>
+  --
+  * nombre : VARCHAR(100) <<UNIQUE>>
+  descripcion : TEXT
+  * activa : BOOLEAN
+  fecha_creacion : TIMESTAMP
+}
+
+entity "productos" as productos {
+  * id : BIGSERIAL <<PK>>
+  --
+  codigo_barras : VARCHAR(50) <<UNIQUE>>
+  * nombre : VARCHAR(200)
+  marca : VARCHAR(100)
+  * categoria_id : BIGINT <<FK>>
+  precio_compra : DECIMAL(10,2)
+  * precio_venta : DECIMAL(10,2)
+  * stock_actual : INTEGER
+  * stock_minimo : INTEGER
+  stock_maximo : INTEGER
+  fecha_vencimiento : DATE
+  imagen : VARCHAR(255)
+  * activo : BOOLEAN
+  fecha_creacion : TIMESTAMP
+  fecha_actualizacion : TIMESTAMP
+}
+
+entity "clientes" as clientes {
+  * id : BIGSERIAL <<PK>>
+  --
+  * tipo_documento : VARCHAR(10) [DNI | RUC | CE]
+  * numero_documento : VARCHAR(20) <<UNIQUE>>
+  * nombre : VARCHAR(200)
+  telefono : VARCHAR(20)
+  email : VARCHAR(100)
+  * puntos_fidelizacion : INTEGER
+  fecha_creacion : TIMESTAMP
+  fecha_actualizacion : TIMESTAMP
+}
+
+entity "ventas" as ventas {
+  * id : BIGSERIAL <<PK>>
+  --
+  numero_venta : VARCHAR(20) <<UNIQUE>>
+  * fecha : TIMESTAMP
+  * usuario_id : BIGINT <<FK>>
+  cliente_id : BIGINT <<FK>>
+  * subtotal : DECIMAL(10,2)
+  * descuento : DECIMAL(10,2)
+  * impuesto : DECIMAL(10,2)
+  * total : DECIMAL(10,2)
+  vuelto : DECIMAL(10,2)
+  * forma_pago : VARCHAR(20) [EFECTIVO | TARJETA | TRANSFERENCIA | YAPE | PLIN | MIXTO | CREDITO]
+  * estado : VARCHAR(20) [COMPLETADA | ANULADA | PENDIENTE]
+  observaciones : TEXT
+  fecha_creacion : TIMESTAMP
+}
+
+entity "detalle_ventas" as detalle_ventas {
+  * id : BIGSERIAL <<PK>>
+  --
+  * venta_id : BIGINT <<FK>>
+  producto_id : BIGINT <<FK>>
+  pack_id : BIGINT <<FK>>
+  * cantidad : INTEGER
+  * precio_unitario : DECIMAL(10,2)
+  * descuento : DECIMAL(10,2)
+  * subtotal : DECIMAL(10,2)
+}
+
+entity "comprobantes_electronicos" as comprobantes {
+  * id : BIGSERIAL <<PK>>
+  --
+  * venta_id : BIGINT <<FK>>
+  * tipo_comprobante : VARCHAR(10) [BOLETA | FACTURA | NOTA_CREDITO | NOTA_DEBITO]
+  * serie : VARCHAR(10)
+  * numero : VARCHAR(20)
+  xml_enviado : TEXT
+  pdf_generado : BYTEA
+  * estado_sunat : VARCHAR(20) [PENDIENTE | ACEPTADO | RECHAZADO | ERROR]
+  fecha_emision : TIMESTAMP
+  fecha_envio : TIMESTAMP
+  fecha_actualizacion : TIMESTAMP
+}
+
+entity "movimientos_inventario" as movimientos {
+  * id : BIGSERIAL <<PK>>
+  --
+  * producto_id : BIGINT <<FK>>
+  * tipo_movimiento : VARCHAR(20) [ENTRADA | SALIDA | AJUSTE | MERMA]
+  * cantidad : INTEGER
+  motivo : VARCHAR(200)
+  usuario_id : BIGINT <<FK>>
+  venta_id : BIGINT <<FK>>
+  * fecha : TIMESTAMP
+}
+
+entity "packs" as packs {
+  * id : BIGSERIAL <<PK>>
+  --
+  * nombre : VARCHAR(200)
+  * precio_pack : DECIMAL(10,2)
+  * activo : BOOLEAN
+  fecha_creacion : TIMESTAMP
+}
+
+entity "pack_productos" as pack_productos {
+  * id : BIGSERIAL <<PK>>
+  --
+  * pack_id : BIGINT <<FK>>
+  * producto_id : BIGINT <<FK>>
+  * cantidad : INTEGER
+}
+
+entity "promociones" as promociones {
+  * id : BIGSERIAL <<PK>>
+  --
+  * nombre : VARCHAR(200)
+  * tipo : VARCHAR(20) [PORCENTAJE | MONTO_FIJO | CANTIDAD | CATEGORIA]
+  descuento_porcentaje : DECIMAL(5,2)
+  descuento_monto : DECIMAL(10,2)
+  * fecha_inicio : TIMESTAMP
+  * fecha_fin : TIMESTAMP
+  * activa : BOOLEAN
+  fecha_creacion : TIMESTAMP
+}
+
+' ============================================================
+' RELACIONES
+' ============================================================
+
+categorias          ||--o{ productos        : "clasifica >"
+usuarios            ||--o{ ventas           : "registra >"
+clientes            |o--o{ ventas           : "realiza >"
+ventas              ||--|{ detalle_ventas   : "contiene >"
+ventas              ||--o{ comprobantes     : "genera >"
+ventas              ||--o{ movimientos      : "origina >"
+productos           ||--o{ detalle_ventas   : "incluido en >"
+productos           ||--o{ movimientos      : "registra >"
+productos           ||--o{ pack_productos   : "compone >"
+packs               ||--|{ pack_productos   : "agrupa >"
+packs               |o--o{ detalle_ventas   : "vendido como >"
+usuarios            ||--o{ movimientos      : "realiza >"
+promociones         }o--o{ productos        : "aplica a >\n(via promocion_productos)"
+
+@enduml

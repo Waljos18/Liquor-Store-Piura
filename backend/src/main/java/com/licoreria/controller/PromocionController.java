@@ -67,6 +67,12 @@ public class PromocionController {
         return ResponseEntity.ok(promocionService.desactivar(id));
     }
 
+    @DeleteMapping("/{id}/eliminar")
+    @Operation(summary = "Eliminar promoción", description = "Elimina físicamente una promoción inactiva")
+    public ResponseEntity<ApiResponse<Void>> eliminar(@PathVariable Long id) {
+        return ResponseEntity.ok(promocionService.eliminar(id));
+    }
+
     @PostMapping("/{id}/aplicar")
     @Operation(summary = "Validar aplicación de promoción", description = "Valida si una promoción puede aplicarse a un producto con cierta cantidad")
     public ResponseEntity<ApiResponse<PromocionDTO>> aplicarPromocion(

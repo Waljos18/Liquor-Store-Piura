@@ -1,0 +1,150 @@
+@startuml Diagrama_Casos_Uso_Chilalo_Shot
+!theme plain
+title Diagrama de Casos de Uso\nSistema de Gestión de Ventas e Inventario con IA\nLicorería Chilalo Shot
+
+skinparam packageStyle rectangle
+skinparam useCase {
+  BackgroundColor #E8F4FD
+  BorderColor #1E88E5
+  FontSize 11
+}
+skinparam actor {
+  BackgroundColor #FFF3E0
+  BorderColor #FF9800
+}
+
+left to right direction
+
+actor "Administrador" as Admin
+actor "Vendedor" as Vendedor
+actor "Cliente\n(registrado)" as Cliente
+actor "Sistema SUNAT" as SUNAT
+
+' ========== PAQUETE: AUTENTICACIÓN ==========
+rectangle "Autenticación" #F5F5F5 {
+  use case "Iniciar sesión" as UC_Login
+  use case "Cerrar sesión" as UC_Logout
+  use case "Gestionar usuarios\ny roles" as UC_Users
+}
+
+' ========== PAQUETE: PUNTO DE VENTA (POS) ==========
+rectangle "Punto de Venta (POS)" #E8F5E9 {
+  use case "Registrar venta" as UC_Venta
+  use case "Buscar producto\n(código/nombre/categoría)" as UC_BuscarProd
+  use case "Agregar producto\na la venta" as UC_AgregarProd
+  use case "Aplicar forma\nde pago" as UC_Pago
+  use case "Imprimir ticket" as UC_Ticket
+  use case "Operar en\nmodo offline" as UC_Offline
+  use case "Sincronizar datos\nal reconectar" as UC_Sync
+}
+
+' ========== PAQUETE: INVENTARIO ==========
+rectangle "Inventario" #FFF8E1 {
+  use case "Gestionar productos\n(alta, edición, baja)" as UC_Productos
+  use case "Registrar entrada\nde inventario" as UC_Entrada
+  use case "Registrar entrada\nde pack" as UC_EntradaPack
+  use case "Consultar stock" as UC_Stock
+  use case "Configurar stock\nmínimo y máximo" as UC_ConfigStock
+  use case "Recibir alerta\nde stock bajo" as UC_AlertaBajo
+  use case "Recibir alerta\nproductos por vencer" as UC_AlertaVencer
+  use case "Ver historial\nde movimientos" as UC_Movimientos
+}
+
+' ========== PAQUETE: FACTURACIÓN ELECTRÓNICA ==========
+rectangle "Facturación Electrónica" #FCE4EC {
+  use case "Emitir boleta\nelectrónica" as UC_Boleta
+  use case "Emitir factura\nelectrónica" as UC_Factura
+  use case "Consultar estado\ndel comprobante" as UC_EstadoComp
+  use case "Generar PDF/XML\ndel comprobante" as UC_PDF
+}
+
+' ========== PAQUETE: PROMOCIONES Y PACKS ==========
+rectangle "Promociones y Packs" #F3E5F5 {
+  use case "Crear y editar packs" as UC_Packs
+  use case "Crear promoción\n(2x1, 3x2, descuentos)" as UC_Promos
+  use case "Aplicar promoción\nen la venta" as UC_AplicarPromo
+}
+
+' ========== PAQUETE: REPORTES Y DASHBOARD ==========
+rectangle "Reportes y Dashboard" #E0F2F1 {
+  use case "Ver dashboard" as UC_Dashboard
+  use case "Generar reporte\nde ventas" as UC_RepVentas
+  use case "Generar reporte\nde inventario" as UC_RepInv
+  use case "Ver productos\nmás vendidos" as UC_MasVendidos
+  use case "Exportar a\nExcel/PDF" as UC_Export
+}
+
+' ========== PAQUETE: INTELIGENCIA ARTIFICIAL ==========
+rectangle "Inteligencia Artificial" #E8EAF6 {
+  use case "Obtener recomendaciones\nde productos" as UC_Recomendaciones
+  use case "Ver predicción\nde demanda" as UC_Prediccion
+  use case "Ver sugerencias\nde compra" as UC_SugerenciaCompra
+}
+
+' ========== PAQUETE: FIDELIZACIÓN ==========
+rectangle "Programa de Fidelización" #EFEBE9 {
+  use case "Registrar cliente" as UC_RegCliente
+  use case "Consultar puntos" as UC_Puntos
+  use case "Canjear puntos\npor descuento" as UC_Canje
+  use case "Acumular puntos\nen venta" as UC_AcumularPuntos
+}
+
+' ========== RELACIONES ACTORES - CASOS DE USO ==========
+
+' Administrador: todos los casos de gestión
+Admin --> UC_Login
+Admin --> UC_Logout
+Admin --> UC_Users
+Admin --> UC_Productos
+Admin --> UC_Entrada
+Admin --> UC_EntradaPack
+Admin --> UC_ConfigStock
+Admin --> UC_Packs
+Admin --> UC_Promos
+Admin --> UC_Dashboard
+Admin --> UC_RepVentas
+Admin --> UC_RepInv
+Admin --> UC_MasVendidos
+Admin --> UC_Export
+Admin --> UC_Prediccion
+Admin --> UC_SugerenciaCompra
+Admin --> UC_RegCliente
+
+' Vendedor: ventas, consultas, facturación, recomendaciones
+Vendedor --> UC_Login
+Vendedor --> UC_Logout
+Vendedor --> UC_Venta
+Vendedor --> UC_BuscarProd
+Vendedor --> UC_Stock
+Vendedor --> UC_AlertaBajo
+Vendedor --> UC_AlertaVencer
+Vendedor --> UC_Boleta
+Vendedor --> UC_Factura
+Vendedor --> UC_Recomendaciones
+Vendedor --> UC_Puntos
+Vendedor --> UC_Offline
+Vendedor --> UC_Sync
+
+' Cliente: fidelización
+Cliente --> UC_Puntos
+Cliente --> UC_Canje
+
+' SUNAT: facturación
+UC_Boleta ..> SUNAT : envia
+UC_Factura ..> SUNAT : envia
+
+' ========== INCLUSIONES Y EXTENSIONES ==========
+UC_Venta ..> UC_BuscarProd : <<include>>
+UC_Venta ..> UC_AgregarProd : <<include>>
+UC_Venta ..> UC_Pago : <<include>>
+UC_Venta ..> UC_AplicarPromo : <<include>>
+UC_Venta ..> UC_AcumularPuntos : <<include>>
+UC_Ticket ..> UC_Venta : <<extend>>
+UC_Boleta ..> UC_Venta : <<extend>>
+UC_Factura ..> UC_Venta : <<extend>>
+UC_EntradaPack ..> UC_Entrada : <<include>>
+UC_Export ..> UC_RepVentas : <<extend>>
+UC_Export ..> UC_RepInv : <<extend>>
+UC_Sync ..> UC_Offline : <<extend>>
+
+@enduml

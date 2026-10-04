@@ -1,0 +1,79 @@
+@startuml MAPA_PROCESO_OPERATIVO_REALIZAR_VENTA
+!theme plain
+title Proceso operativo: Realizar venta en POS\nSistema Gestión Integral de Licorería (Chilalo Shot)
+
+skinparam activity {
+  FontColor #1a1a1a
+  FontSize 11
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+}
+skinparam arrow {
+  Color #333333
+}
+
+|Vendedor|
+start
+:Iniciar nueva venta en POS;
+
+|Sistema|
+:Disponibilizar carrito y búsqueda;
+
+|Vendedor|
+repeat
+  :Buscar producto (código de barras, nombre o categoría);
+  :Solicitar agregar al carrito con cantidad;
+|Sistema|
+  if (¿Producto con stock suficiente?) then (Sí)
+    :Agregar ítem al carrito;
+    :Mostrar precio unitario, cantidad y subtotal por ítem;
+    :Aplicar promociones y packs automáticamente;
+    :Calcular subtotal, descuentos e IGV;
+    :Mostrar total a pagar;
+    :Mostrar recomendaciones de productos (IA) opcional;
+  else (No)
+    :Mostrar alerta "Stock insuficiente";
+    :No permitir agregar;
+  endif
+repeat while (¿Agregar más productos?) is (Sí)
+-> No;
+
+|Vendedor|
+:Registrar forma de pago\n(efectivo / tarjeta / transferencia / mixto);
+if (¿Pago en efectivo?) then (Sí)
+  :Ingresar monto recibido;
+  |Sistema|
+  :Calcular y mostrar vuelto;
+  |Vendedor|
+endif
+
+if (¿Cliente requiere comprobante electrónico?) then (Sí)
+  :Registrar datos del cliente\n(DNI o RUC, nombre);
+  |Sistema|
+  if (¿Conexión con SUNAT disponible?) then (Sí)
+    :Generar boleta o factura según tipo documento;
+    :Enviar comprobante a SUNAT vía OSE;
+    :Recibir y almacenar CDR;
+    :Generar PDF del comprobante;
+  else (No / Error)
+    :Guardar venta y cola de comprobante;
+    :Reintentar envío después (al recuperar conexión);
+    :Entregar ticket de venta;
+  endif
+else (No)
+  |Sistema|
+  :Preparar solo ticket de venta;
+endif
+
+:Registrar venta en el sistema;
+:Actualizar stock (descontar por ítem);
+:Registrar movimientos de inventario;
+:Imprimir o mostrar ticket al cliente;
+if (¿Se emitió comprobante electrónico?) then (Sí)
+  :Poner PDF a disposición\n(impresión o envío al cliente);
+endif
+
+|Vendedor|
+stop
+
+@enduml

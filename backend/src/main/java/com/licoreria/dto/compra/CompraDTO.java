@@ -21,5 +21,6 @@ public class CompraDTO {
     private String estado;
     private String observaciones;
     private Instant fechaCreacion;
+    private Instant fechaRecepcion;
     private List<DetalleCompraDTO> detalles;
 }

@@ -141,6 +141,17 @@ public class PackService {
         return ApiResponse.ok(null, "Pack desactivado exitosamente");
     }
 
+    @Transactional
+    public ApiResponse<Void> eliminar(Long id) {
+        Pack pack = packRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pack no encontrado"));
+        if (pack.getActivo()) {
+            return ApiResponse.error("INVALID", "Solo se pueden eliminar packs inactivos");
+        }
+        packRepository.delete(pack);
+        return ApiResponse.ok(null, "Pack eliminado exitosamente");
+    }
+
     public ApiResponse<BigDecimal> calcularPrecioSugerido(Long id) {
         Pack pack = packRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pack no encontrado"));

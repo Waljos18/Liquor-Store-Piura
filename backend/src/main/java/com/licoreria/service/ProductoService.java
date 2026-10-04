@@ -50,6 +50,13 @@ public class ProductoService {
     }
 
     @Transactional(readOnly = true)
+    public ApiResponse<ProductoDTO> buscarPorCodigoBarras(String codigo) {
+        return productoRepository.findByCodigoBarras(codigo)
+                .map(p -> ApiResponse.ok(toDto(p)))
+                .orElse(ApiResponse.error("NOT_FOUND", "Producto no encontrado con código: " + codigo));
+    }
+
+    @Transactional(readOnly = true)
     public ApiResponse<List<ProductoDTO>> buscarParaPos(String q) {
         if (q == null || q.isBlank()) {
             return ApiResponse.ok(List.of());
@@ -284,6 +291,17 @@ public class ProductoService {
         p.setActivo(false);
         productoRepository.save(p);
         return ApiResponse.ok(null, "Producto desactivado exitosamente");
+    }
+
+    @Transactional
+    public ApiResponse<Void> eliminarBulk(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return ApiResponse.error("INVALID", "Lista de IDs vacía");
+        }
+        List<Producto> productos = productoRepository.findAllById(ids);
+        productos.forEach(p -> p.setActivo(false));
+        productoRepository.saveAll(productos);
+        return ApiResponse.ok(null, productos.size() + " producto(s) desactivados");
     }
 
     @Transactional

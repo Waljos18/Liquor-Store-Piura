@@ -1,0 +1,175 @@
+Name	Outline Level	WBS
+NOMBRE DEL PROYECTO: Sistema POS Licoreria Chilalo	1	1
+1.0 INICIO	2	1.0
+Kickoff y definicion de alcance	3	1.1
+Identificar stakeholders y roles clave	3	1.2
+Crear acta de constitucion del proyecto	3	1.3
+Formar equipo Scrum	3	1.4
+Definir epicas del producto	3	1.5
+Crear Product Backlog priorizado	3	1.6
+Crear planificacion de lanzamiento	3	1.7
+2.0 PLANIFICACION Y ESTIMACION	2	2.0
+Crear historias de usuario	3	2.1
+Estimar historias de usuario con Planning Poker	3	2.2
+Crear tareas por sprint	3	2.3
+Estimar tareas y capacidad del equipo	3	2.4
+Crear plan de calidad	3	2.5
+Crear registro de riesgos	3	2.6
+Crear cronograma del proyecto	3	2.7
+3.0 IMPLEMENTACION, REVISION Y RETROSPECTIVA	2	3.0
+SPRINT 1: Configuracion y modulo base	3	3.1
+Reunion de planeacion del sprint	4	3.1.1
+Crear Sprint Backlog	4	3.1.2
+HU-20 Gestion de usuarios y roles	4	3.1.3
+Configurar autenticacion JWT y seguridad	5	3.1.3.1
+Configurar roles ADMIN y VENDEDOR	5	3.1.3.2
+Crear endpoints CRUD de usuarios	5	3.1.3.3
+HU-06 Gestion de productos y categorias	4	3.1.4
+Disenar base de datos PostgreSQL y migraciones V1-V5	5	3.1.4.1
+Implementar entidades JPA base	5	3.1.4.2
+Crear endpoints CRUD de productos y categorias	5	3.1.4.3
+Arquitectura y frontend base	4	3.1.5
+Configurar proyecto Spring Boot	5	3.1.5.1
+Configurar React, Vite y Tailwind	5	3.1.5.2
+Implementar login y layout principal	5	3.1.5.3
+Pruebas (testing)	4	3.1.6
+Pruebas de endpoints con Postman	5	3.1.6.1
+Reunion de demostracion y revision del sprint	4	3.1.7
+Reunion de retrospectiva del sprint	4	3.1.8
+SPRINT 2: POS web y modulo de ventas	3	3.2
+Reunion de planeacion del sprint	4	3.2.1
+Crear Sprint Backlog	4	3.2.2
+HU-01 Registrar ventas desde el POS web	4	3.2.3
+Implementar entidades Venta y DetalleVenta	5	3.2.3.1
+Implementar VentaService con descuento de stock	5	3.2.3.2
+Implementar endpoint POST /ventas	5	3.2.3.3
+Implementar carrito de compras	5	3.2.3.4
+HU-02 Buscar productos en POS	4	3.2.4
+Crear pantalla POS con barra de busqueda	5	3.2.4.1
+HU-03 Formas de pago multiples	4	3.2.5
+Implementar panel de pago Efectivo Yape Plin Tarjeta	5	3.2.5.1
+Implementar pago mixto	5	3.2.5.2
+Crear migracion V6 tabla venta_pagos	5	3.2.5.3
+HU-05 Alertas de stock bajo	4	3.2.6
+Implementar alertas de stock bajo	5	3.2.6.1
+Crear pantalla Inventario con tabs Alertas y Movimientos	5	3.2.6.2
+Pruebas (testing)	4	3.2.7
+Pruebas funcionales del flujo completo de venta	5	3.2.7.1
+Reunion de demostracion y revision del sprint	4	3.2.8
+Reunion de retrospectiva del sprint	4	3.2.9
+SPRINT 3: Dashboard, compras y facturacion SUNAT	3	3.3
+Reunion de planeacion del sprint	4	3.3.1
+Crear Sprint Backlog	4	3.3.2
+HU-08 Dashboard con KPIs	4	3.3.3
+Implementar Dashboard con KPIs ventas hoy semana mes	5	3.3.3.1
+Implementar graficos de ventas	5	3.3.3.2
+HU-07 Registro de compras a proveedores	4	3.3.4
+Implementar entidades Proveedor Compra y DetalleCompra	5	3.3.4.1
+Implementar flujo PENDIENTE a RECIBIDA	5	3.3.4.2
+Crear pantalla de Compras	5	3.3.4.3
+HU-04 Facturacion electronica SUNAT	4	3.3.5
+Implementar FacturacionService y XML UBL 2.1	5	3.3.5.1
+Integrar firma digital y envio a OSE	5	3.3.5.2
+Configurar ambiente sandbox SUNAT	5	3.3.5.3
+Crear pantalla de emision boleta y factura	5	3.3.5.4
+Crear migracion V7 comprobantes_electronicos	5	3.3.5.5
+Pruebas (testing)	4	3.3.6
+Pruebas de comprobantes en ambiente sandbox	5	3.3.6.1
+Reunion de demostracion y revision del sprint	4	3.3.7
+Reunion de retrospectiva del sprint	4	3.3.8
+SPRINT 4: Reportes, promociones y alertas de vencimiento	3	3.4
+Reunion de planeacion del sprint	4	3.4.1
+Crear Sprint Backlog	4	3.4.2
+HU-09 Reportes de ventas	4	3.4.3
+Implementar ReporteService con filtros por fecha	5	3.4.3.1
+Agregar desglose por forma de pago y categoria	5	3.4.3.2
+Crear pantalla de Reportes	5	3.4.3.3
+HU-10 Promociones y packs	4	3.4.4
+Implementar entidades Promocion y Pack	5	3.4.4.1
+Implementar aplicacion automatica de promociones	5	3.4.4.2
+Crear pantalla de Promociones	5	3.4.4.3
+Mostrar packs dentro del POS	5	3.4.4.4
+HU-22 Alertas de productos proximos a vencer	4	3.4.5
+Implementar alertas de vencimiento a 30 dias	5	3.4.5.1
+Mostrar alertas en pantalla de Inventario	5	3.4.5.2
+HU-23 Historial de movimientos de inventario	4	3.4.6
+Registrar movimientos de inventario por ventas compras y ajustes	5	3.4.6.1
+Visualizar historial en modulo Inventario	5	3.4.6.2
+Crear migracion V8 stock minimo por categoria	5	3.4.6.3
+Pruebas (testing)	4	3.4.7
+Pruebas de reportes con distintos rangos de fecha	5	3.4.7.1
+Reunion de demostracion y revision del sprint	4	3.4.8
+Reunion de retrospectiva del sprint	4	3.4.9
+SPRINT 5: App Android, fidelizacion y apertura de caja	3	3.5
+Reunion de planeacion del sprint	4	3.5.1
+Crear Sprint Backlog	4	3.5.2
+HU-18 App Android para ventas	4	3.5.3
+Configurar proyecto Android con Kotlin Hilt y Retrofit	5	3.5.3.1
+Implementar Login y Dashboard en Android	5	3.5.3.2
+Implementar POSScreen con carrito y busqueda	5	3.5.3.3
+Implementar formas de pago y confirmacion de venta	5	3.5.3.4
+HU-11 Fidelizacion acumulacion de puntos	4	3.5.4
+Implementar entidades de fidelizacion	5	3.5.4.1
+Implementar acumulacion automatica de puntos	5	3.5.4.2
+Crear migracion V17 fidelizacion	5	3.5.4.3
+HU-12 Canje de puntos en POS	4	3.5.5
+Implementar canje de puntos en POS web	5	3.5.5.1
+Mostrar puntos disponibles por cliente	5	3.5.5.2
+HU-13 Apertura y cierre de caja	4	3.5.6
+Implementar AperturaCaja y CierreCaja	5	3.5.6.1
+Crear pantalla de cierre de caja	5	3.5.6.2
+Crear migracion V14 apertura_caja	5	3.5.6.3
+Pruebas (testing)	4	3.5.7
+Pruebas del flujo completo en app Android	5	3.5.7.1
+Reunion de demostracion y revision del sprint	4	3.5.8
+Reunion de retrospectiva del sprint	4	3.5.9
+SPRINT 6: Devoluciones, gastos, mermas y creditos	3	3.6
+Reunion de planeacion del sprint	4	3.6.1
+Crear Sprint Backlog	4	3.6.2
+HU-14 Devoluciones de ventas	4	3.6.3
+Implementar DevolucionService con restauracion de stock	5	3.6.3.1
+Crear pantalla de Devoluciones	5	3.6.3.2
+Crear migracion V12 devoluciones	5	3.6.3.3
+HU-15 Registro de gastos operativos	4	3.6.4
+Implementar GastoService con categorias de gasto	5	3.6.4.1
+Crear pantalla de Gastos	5	3.6.4.2
+Agregar ganancia neta y total de gastos en Reportes	5	3.6.4.3
+Crear migracion V15 gastos	5	3.6.4.4
+HU-16 Registro de mermas	4	3.6.5
+Implementar MermaService y descuento de stock	5	3.6.5.1
+Crear pantalla de Mermas	5	3.6.5.2
+Crear migracion V16 mermas	5	3.6.5.3
+HU-17 Creditos y cuentas por cobrar	4	3.6.6
+Implementar CuentaPorCobrarService y pagos parciales	5	3.6.6.1
+Crear pantalla de Cuentas por Cobrar	5	3.6.6.2
+Crear migracion V13 credito_fiado	5	3.6.6.3
+Pruebas (testing)	4	3.6.7
+Pruebas de devoluciones parciales y creditos	5	3.6.7.1
+Reunion de demostracion y revision del sprint	4	3.6.8
+Reunion de retrospectiva del sprint	4	3.6.9
+SPRINT 7: IA, recuperacion de contrasena y estabilizacion	3	3.7
+Reunion de planeacion del sprint	4	3.7.1
+Crear Sprint Backlog	4	3.7.2
+HU-19 Modulo de IA para prediccion de demanda	4	3.7.3
+Desarrollar servicio de IA para prediccion de demanda	5	3.7.3.1
+Integrar modulo IA con backend Spring Boot	5	3.7.3.2
+Crear pantalla de IA en frontend	5	3.7.3.3
+HU-21 Recuperacion de contrasena por correo	4	3.7.4
+Implementar recuperacion de contrasena por email	5	3.7.4.1
+Crear pantallas Forgot Password y Reset Password	5	3.7.4.2
+Crear migracion V18 password_reset_tokens	5	3.7.4.3
+Pruebas (testing)	4	3.7.5
+Pruebas de regresion general	5	3.7.5.1
+Correccion de bugs reportados en pruebas	5	3.7.5.2
+Reunion de demostracion y revision del sprint	4	3.7.6
+Reunion de retrospectiva del sprint	4	3.7.7
+4.0 LANZAMIENTO	2	4.0
+Enviar entregables del proyecto	3	4.1
+Puesta en produccion en el entorno del cliente	3	4.2
+Capacitacion al dueno y al vendedor	3	4.3
+Entrega formal de la documentacion final	3	4.4
+Reunion de retrospectiva de proyecto	3	4.5
+5.0 CIERRE	2	5.0
+Cierre financiero del proyecto	3	5.1
+Liberar y evaluar recursos del equipo	3	5.2
+Crear acta de cierre del proyecto	3	5.3

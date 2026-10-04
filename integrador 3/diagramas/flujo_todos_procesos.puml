@@ -1,0 +1,26 @@
+@startuml
+title Flujo general por modulos - Chilalo Shot
+
+|#E8F5E9|POS / Venta|
+start
+:Login;
+:Buscar producto o pack;
+:Agregar al carrito;
+:Aplicar promociones;
+:Cobrar;
+:Emitir boleta o factura;
+:Sistema envia a SUNAT;
+:Imprimir ticket;
+
+|#FFF8E1|Inventario|
+:Descontar stock;
+:Registrar salida;
+if (Cliente con puntos?) then (Si)
+  :Acumular puntos;
+endif
+
+|#E3F2FD|
+:Fin venta;
+stop
+
+@enduml

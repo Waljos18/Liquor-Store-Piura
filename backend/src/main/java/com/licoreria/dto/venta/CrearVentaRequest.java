@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -28,13 +29,19 @@ public class CrearVentaRequest {
 
     private BigDecimal descuento;
 
-    /** Si true (default), se aplica IGV 18%. Si false, impuesto = 0 */
-    private Boolean aplicarIgv = true;
+    /** Si true, se aplica IGV 18%. Por defecto false (sin IGV) */
+    private Boolean aplicarIgv = false;
 
     private String observaciones;
 
     /** Referencia de operación para YAPE/PLIN (opcional) */
     private String referencia;
+
+    /** Fecha de vencimiento del crédito (solo para formaPago=CREDITO) */
+    private LocalDate fechaVencimientoCredito;
+
+    /** Puntos a canjear como descuento (opcional). Si >0, se descuenta del total */
+    private Integer puntosCanjeados;
 
     @Data
     public static class PagoMixto {

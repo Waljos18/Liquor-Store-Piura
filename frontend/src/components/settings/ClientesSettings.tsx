@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { fetchClientes, crearCliente, actualizarCliente, eliminarCliente, type ClienteDTO } from '../../api/api';

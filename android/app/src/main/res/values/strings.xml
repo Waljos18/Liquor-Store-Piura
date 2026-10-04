@@ -5,8 +5,14 @@
     <string name="login_username">Usuario</string>
     <string name="login_password">Contraseña</string>
     <string name="login_button">Entrar</string>
+    <string name="login_subtitle">Licorería · Punto de venta</string>
+    <string name="loading_app">Cargando…</string>
     <string name="login_error">Usuario o contraseña incorrectos</string>
     <string name="login_required">Completa usuario y contraseña</string>
     <string name="home_title">Inicio</string>
     <string name="logout">Cerrar sesión</string>
+    <string name="nav_clientes">Clientes</string>
+    <string name="clientes_nuevo">Nuevo cliente</string>
+    <string name="clientes_editar">Editar cliente</string>
+    <string name="clientes_buscar">Buscar por nombre o documento…</string>
 </resources>

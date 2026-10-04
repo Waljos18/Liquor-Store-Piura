@@ -84,9 +84,12 @@
 │  └──────────────┘  └──────────────┘  └──────────────┘  └──────────┘│
 │                                                                       │
 │  ┌─────────────────────────────────────────────────────────────────┐│
-│  │ Ventas de la Semana                                             ││
+│  │ VENTAS POR PERÍODO                                              ││
 │  │                                                                 ││
-│  │  [Gráfico de líneas - Ventas por día]                          ││
+│  │  Período: [Hoy] [Semana] [Mes] [Rango de fechas] [Año]         ││
+│  │           (•)     ( )     ( )   [__/__/____ - __/__/____]  ( ) ││
+│  │                                                                 ││
+│  │  [Gráfico de líneas/barras - Ventas según período seleccionado] ││
 │  │                                                                 ││
 │  └─────────────────────────────────────────────────────────────────┘│
 │                                                                       │
@@ -122,7 +125,8 @@
 **Elementos:**
 - Barra superior con menú hamburguesa, notificaciones, usuario y logout
 - Tarjetas de métricas principales (Ventas, Productos, Stock, Alertas)
-- Gráfico de ventas semanales
+- **Selector de período de ventas:** Hoy, Semana, Mes, Rango de fechas (cualquier día), Año; el gráfico se actualiza según la selección
+- Gráfico de ventas según período elegido
 - Lista de productos más vendidos
 - Lista de productos con stock bajo
 - Panel de recomendaciones de IA
@@ -157,7 +161,7 @@
 │  │  ┌────┐ ┌────┐ ┌────┐ ┌────┐    │  │  FORMA DE PAGO          │ │
 │  │  │[img]│ │[img]│ │[img]│ │[img]│    │  │  ( ) Efectivo          │ │
 │  │  │Ron  │ │Whisky│ │Vino │ │Pisco│    │  │  ( ) Tarjeta           │ │
-│  │S/45│ │ │S/120│ │S/35│ │S/25│    │  │  ( ) Transferencia      │ │
+│  │S/45│ │ │S/120│ │S/35│ │S/25│    │  │  ( ) QR (Yape / Plin)   │ │
 │  │  │Stock:5│ │Stock:3│ │Stock:10│ │Stock:8│    │  │  (•) Mixto            │ │
 │  │  └────┘ └────┘ └────┘ └────┘    │  │                         │ │
 │  │                                  │  │  Monto Recibido:        │ │
@@ -185,11 +189,104 @@
 - Filtros por categoría
 - Grid de productos con imagen, nombre, precio y stock
 - Panel lateral con resumen de venta
-- Selección de forma de pago
+- **Formas de pago:** Efectivo, Tarjeta, QR (Yape, Plin), Mixto
 - Campo para monto recibido y cálculo de vuelto
 - Búsqueda de cliente
 - Recomendaciones de IA
 - Botón grande "FINALIZAR VENTA"
+
+---
+
+## 4.1 MOCKUP: BOLETAS Y FACTURAS
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ [☰] Boletas y Facturas    [🔍 Buscar...]  [Filtros: Todas ▼]        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                       │
+│  Tipo: [Todas] [Boletas] [Facturas]   Fecha: [__/__/____ - __/__/____]│
+│                                                                       │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │ Serie-Número  │ Tipo    │ Fecha     │ Cliente/DNI  │ Total  │Acciones│
+│  ├───────────────────────────────────────────────────────────────┤ │
+│  │ B001-0000123  │ Boleta  │ 06/02/25  │ 45678901     │ S/ 66  │[👁][✏️]│
+│  │ F001-0000456  │ Factura │ 05/02/25  │ Empresa S.A. │ S/ 320 │[👁][✏️]│
+│  │ B001-0000122  │ Boleta  │ 05/02/25  │ 87654321     │ S/ 125 │[👁][✏️]│
+│  └───────────────────────────────────────────────────────────────┘ │
+│                                                                       │
+│  Mostrando 1-3 de 150 comprobantes              [<] 1 2 3 ... [>]   │
+│                                                                       │
+└───────────────────────────────────────────────────────────────────────┘
+
+MODAL: VER / MODIFICAR COMPROBANTE
+┌─────────────────────────────────────────────────────────────┐
+│  Boleta B001-0000123                          [Imprimir] [X] │
+├─────────────────────────────────────────────────────────────┤
+│  Cliente/DNI: [45678901                    ]  (editable)    │
+│  Fecha: [06/02/2025]  Hora: [14:32]                         │
+│  Detalle:                                                    │
+│  │ Producto        │ Cant. │ P.Unit │ Subtotal │             │
+│  │ Cerveza Pilsen  │  2    │ 4.00   │ 8.00     │ [✏️]        │
+│  │ Ron Flor Caña   │  1    │ 45.00  │ 45.00    │ [✏️]        │
+│  │ Snacks          │  1    │ 3.50   │ 3.50     │ [✏️]        │
+│  Subtotal: S/ 56.50   IGV: S/ 10.17   TOTAL: S/ 66.67        │
+│  Forma de pago: Efectivo                                     │
+│                                                              │
+│  [Cancelar]  [Guardar cambios]  [Anular comprobante]         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Elementos:**
+- Listado de boletas y facturas con filtros por tipo y rango de fechas
+- Búsqueda por número, cliente o DNI
+- Acciones: Ver (👁) y Editar (✏️) para corregir errores
+- Modal de detalle que permite modificar datos del comprobante (cliente, ítems, totales) y anular en caso necesario
+- Opción de reimprimir comprobante
+
+---
+
+## 4.2 MOCKUP: CONFIGURACIÓN (ADMIN)
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ [☰] Configuración                                                    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                       │
+│  Menú lateral (solo Admin):                                           │
+│  ┌─────────────────────────┐                                        │
+│  │ ⚙️ Impresoras            │  Configuración de impresoras (ticket,   │
+│  │ 📁 Categorías            │  A4, térmica). Asignar por punto de    │
+│  │ 👥 Clientes              │  venta o por tipo de comprobante.       │
+│  │ 📦 Productos             │                                        │
+│  │ 🚚 Proveedores           │  ┌──────────────────────────────────┐  │
+│  │ 💳 Métodos de pago        │  │ Impresora por defecto: [▼ Térmica]│  │
+│  │ 👤 Usuarios              │  │ Impresora facturas: [▼ A4]        │  │
+│  │ 🧾 Config. comprobante    │  │ [Guardar]                         │  │
+│  └─────────────────────────┘  └──────────────────────────────────┘  │
+│                                                                       │
+│  Cada ítem abre su pantalla de gestión (CRUD):                       │
+│  • Categorías: nombre, descripción, estado                           │
+│  • Clientes: DNI/RUC, nombre, dirección, contacto                     │
+│  • Productos: (ver sección Gestión de Productos)                     │
+│  • Proveedores: (ver sección Gestor de Proveedores)                  │
+│  • Métodos de pago: Efectivo, Tarjeta, QR Yape, QR Plin, Mixto       │
+│  • Usuarios: login, rol, permisos, estado                            │
+│  • Config. comprobante: serie, numeración, tipo (boleta/factura),    │
+│    datos de empresa (RUC, razón social, dirección) para facturación  │
+│                                                                       │
+└───────────────────────────────────────────────────────────────────────┘
+```
+
+**Elementos:**
+- Sección **Configuración** accesible solo para rol Admin
+- **Impresoras:** gestionar impresoras (ticket, A4, térmica) y asignación por POS o tipo de comprobante
+- **Categorías:** CRUD de categorías de productos
+- **Clientes:** CRUD de clientes (uso en facturas y POS)
+- **Productos:** enlace a gestión de productos
+- **Proveedores:** enlace a gestor de proveedores
+- **Métodos de pago:** activar/desactivar y orden: Efectivo, Tarjeta, QR (Yape, Plin), Mixto
+- **Usuarios:** CRUD de usuarios del sistema y roles
+- **Configuración de comprobante:** series, numeración, datos de empresa para boletas y facturas
 
 ---
 
@@ -228,6 +325,8 @@ MODAL: NUEVO PRODUCTO
 │  Marca: [________________________________]                  │
 │                                                             │
 │  Categoría: * [▼ Cervezas                    ]              │
+│                                                             │
+│  Proveedor: [▼ Distribuidora Norte (opcional) ]              │
 │                                                             │
 │  Precio de Compra: [S/ ________]                            │
 │  Precio de Venta: * [S/ ________]                           │
@@ -311,7 +410,66 @@ MODAL: NUEVO PRODUCTO
 
 ---
 
-## 7. MOCKUP: GESTIÓN DE PROMOCIONES
+## 7. MOCKUP: GESTOR DE PROVEEDORES
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ [☰] Proveedores              [🔍 Buscar...]  [+ Nuevo Proveedor]    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                       │
+│  Filtros: [Todos] [Activos] [Con productos asociados]                 │
+│                                                                       │
+│  ┌───────────────────────────────────────────────────────────────┐ │
+│  │ RUC/DNI   │ Razón Social / Nombre   │ Contacto    │ Productos │Acciones│
+│  ├───────────────────────────────────────────────────────────────┤ │
+│  │ 20123456789│ Distribuidora Norte   │ 974-123456  │    45     │[✏️][🗑️]│ │
+│  │ 10876543210│ Juan Pérez (Cervezas) │ 987-654321  │    12     │[✏️][🗑️]│ │
+│  │ 20198765432│ Licores Piura S.A.C.  │ 965-111222  │    28     │[✏️][🗑️]│ │
+│  │ 10456789012│ María López (Vinos)   │ 932-333444  │     8     │[✏️][🗑️]│ │
+│  └───────────────────────────────────────────────────────────────┘ │
+│                                                                       │
+│  Mostrando 1-4 de 12 proveedores                   [<] 1 [>]        │
+│                                                                       │
+└───────────────────────────────────────────────────────────────────────┘
+
+MODAL: NUEVO PROVEEDOR
+┌─────────────────────────────────────────────────────────────┐
+│  Nuevo Proveedor                                   [X]       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Tipo de documento: (•) RUC  ( ) DNI                        │
+│                                                             │
+│  Número (RUC/DNI): * [________________]                     │
+│                                                             │
+│  Razón Social / Nombre: * [________________________________] │
+│                                                             │
+│  Dirección: [________________________________________]       │
+│                                                             │
+│  Teléfono: [________________]                                │
+│  Email: [________________________________]                   │
+│                                                             │
+│  Contacto (persona): [________________________________]       │
+│                                                             │
+│  Notas: [________________________________________]           │
+│         [________________________________________]           │
+│                                                             │
+│  [Cancelar]  [Guardar Proveedor]                            │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Elementos:**
+- Lista de proveedores en tabla (RUC/DNI, razón social, contacto, cantidad de productos asociados)
+- Filtros por estado y por “con productos asociados”
+- Búsqueda de proveedores
+- Botón "Nuevo Proveedor"
+- Modal para crear/editar proveedor (datos fiscales, dirección, teléfono, email, contacto)
+- Acciones: Editar y Eliminar (o desactivar)
+- Integración: en "Nuevo Producto" y en "Registrar Compra" (Inventario) se puede seleccionar el proveedor
+
+---
+
+## 8. MOCKUP: GESTIÓN DE PROMOCIONES
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -360,11 +518,12 @@ MODAL: NUEVO PRODUCTO
 
 ---
 
-## 8. MOCKUP: REPORTES Y ANALYTICS
+## 9. MOCKUP: REPORTES Y ANALYTICS
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│ [☰] Reportes                    [📥 Exportar]  [📧 Enviar por Email]│
+│ [☰] Reportes    [📄 Reporte Ventas PDF] [📄 Reporte Inventario PDF]  │
+│                 [📥 Exportar]  [📧 Enviar por Email]                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                       │
 │  Período: [Hoy ▼] [Esta Semana] [Este Mes] [Rango Personalizado]    │
@@ -416,22 +575,24 @@ MODAL: NUEVO PRODUCTO
 
 **Elementos:**
 - Selector de período
+- **Generar Reporte de Ventas en PDF:** descarga un PDF con resumen de ventas, totales, transacciones, ticket promedio y (opcional) gráficos del período seleccionado
+- **Generar Reporte de Inventario en PDF:** descarga un PDF con estado de stock, productos con stock bajo, próximos a vencer y movimientos recientes (desde Inventario o desde Reportes)
 - Resumen de ventas con gráficos
 - Gráficos por categoría y forma de pago
 - Tabla de productos más vendidos
 - Panel de predicciones de IA
-- Opciones de exportación
+- Opciones de exportación (Excel, etc.) y envío por email
 
 ---
 
-## 9. CONSIDERACIONES DE DISEÑO RESPONSIVE
+## 10. CONSIDERACIONES DE DISEÑO RESPONSIVE
 
-### 9.1 Breakpoints
+### 10.1 Breakpoints
 - **Mobile:** < 768px
 - **Tablet:** 768px - 1024px
 - **Desktop:** > 1024px
 
-### 9.2 Adaptaciones Mobile
+### 10.2 Adaptaciones Mobile
 - Menú hamburguesa siempre visible
 - Tarjetas apiladas verticalmente
 - Botones de acción flotantes

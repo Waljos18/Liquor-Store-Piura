@@ -23,6 +23,7 @@ El presente documento constituye el Trabajo Académico Aplicado (TAA) que docume
 **Contenido de los capítulos:**
 
 - **Capítulo I - Análisis del Negocio:** Contiene la descripción de la organización Chilalo Shot, su historia, visión, misión, organigrama, análisis FODA, identificación de necesidades, elicitación de requisitos, análisis del problema y propuesta de solución con sus alternativas.
+- **Capítulo II - Planificación del Proyecto:** Contiene el enfoque de gestión (Scrum) y ciclo de vida (Cascada para modelado), justificación del enfoque híbrido, arquitectura del software, modelos/artefactos a aplicar, y la planificación detallada: enunciado de alcance (EAP), objetivos, beneficios, cronograma, interesados, supuestos, restricciones, factores críticos de éxito, riesgos y matriz de comunicaciones.
 
 ---
 
@@ -253,7 +254,143 @@ La propuesta de solución atiende las **tres perspectivas principales**:
 
 ---
 
-## 12. ALTERNATIVAS A SOLUCIÓN PROPUESTA
+## 12. FACTIBILIDAD DEL PROYECTO
+
+La factibilidad del proyecto es la evaluación de si este puede ser llevado a cabo de manera exitosa. Se basa en tres pilares fundamentales: la disponibilidad de recursos tecnológicos (factibilidad técnica), la capacidad de las personas y la organización para asimilar la solución (factibilidad operativa) y la rentabilidad frente a costos y beneficios (factibilidad económica). A continuación se desarrolla cada pilar y, al final, una conclusión integral que sustenta la toma de decisiones estratégicas.
+
+---
+
+### 12.1 Recursos tecnológicos actuales y factibilidad técnica
+
+**Evaluación de los recursos tecnológicos**
+
+Se analiza si la organización cuenta con las herramientas, software, hardware e infraestructura tecnológica necesarias para ejecutar el proyecto:
+
+| Recurso / Aspecto | Estado actual en Chilalo Shot | ¿Permite ejecutar el proyecto? |
+|-------------------|-------------------------------|--------------------------------|
+| **Herramientas (software de usuario)** | Uso de Windows; sin sistema de gestión actual. | **Sí.** Cliente web y POS con Electron son compatibles con Windows; no se requieren licencias adicionales de oficina. |
+| **Software (plataforma)** | Sin servidores ni infraestructura propia. | **Sí.** Solución en la nube (Render, Supabase/Neon) elimina necesidad de servidores locales; stack React, Spring Boot, PostgreSQL y FastAPI se alojan en servicios cloud de tier gratuito. |
+| **Hardware** | 1 PC o laptop en el establecimiento; posibilidad de tablet. | **Sí.** El sistema corre en equipo estándar; opcional: lector de código de barras (USD 30) e impresora térmica (USD 80). |
+| **Infraestructura tecnológica** | Conectividad internet en zona urbana de Piura (residencial o comercial). | **Sí.** Suficiente para sistema web y sincronización con SUNAT; el POS incluye modo offline para cortes breves. |
+| **Integración con terceros** | Requiere OSE para facturación electrónica SUNAT. | **Sí.** OSE disponibles en el mercado (Nubefact, Fact, etc.) con APIs documentadas; integración técnica estándar. |
+
+**Identificación de riesgos tecnológicos**
+
+Se anticipan posibles dificultades o limitaciones tecnológicas durante la ejecución del proyecto:
+
+| Riesgo tecnológico | Descripción | Mitigación |
+|--------------------|-------------|------------|
+| **Cortes de internet prolongados** | Sin conexión, la facturación electrónica y la sincronización se retrasan. | Modo offline en POS; cola de comprobantes para emitir al restablecer conexión; uso de datos móviles como respaldo. |
+| **Cambios en APIs de SUNAT o OSE** | Actualizaciones normativas o del proveedor OSE pueden requerir ajustes en el sistema. | Diseño modular de integración; documentación de APIs; plan de pruebas ante actualizaciones. |
+| **Límites de tier gratuito en cloud** | Servicios gratuitos pueden tener cuotas de uso o disponibilidad limitada. | Monitoreo de uso; plan de migración a plan de pago bajo si crece el volumen; alternativas (Railway, Neon) ya identificadas. |
+| **Falla de equipo en punto de venta** | PC o laptop dañada impide operar el POS. | Sistema accesible desde navegador; posibilidad de usar otro dispositivo temporalmente; respaldo de datos en la nube. |
+
+**Conclusión técnica:** La organización cuenta con los recursos tecnológicos necesarios para ejecutar el proyecto, y los riesgos tecnológicos identificados son manejables con las mitigaciones propuestas. La factibilidad técnica es **alta**.
+
+---
+
+### 12.2 Recursos humanos y factibilidad operativa
+
+**Evaluación de las habilidades de los colaboradores**
+
+Se analiza si el personal posee las habilidades y conocimientos técnicos necesarios para asimilar la solución:
+
+| Colaborador | Habilidades actuales | Necesidad para el sistema | Valoración |
+|-------------|----------------------|---------------------------|------------|
+| **Dueño / Administrador** | Gestión del negocio, venta, manejo básico de PC/celular. | Uso del POS, reportes, configuración básica, emisión de comprobantes. | **Adecuada.** La interfaz se diseña para usuarios no técnicos; capacitación corta y documentación permiten asimilar la solución. |
+| **Empleado / Vendedor** | Atención al cliente, venta presencial, uso de cuaderno o calculadora. | Registro de ventas en POS, consulta de precios y stock, aplicación de promociones. | **Adecuada.** Tareas acotadas; curva de aprendizaje mínima (RNF-01); soporte en puesta en marcha. |
+
+No se requieren conocimientos de programación ni administración de sistemas; el equipo de desarrollo asume el despliegue y el soporte técnico inicial.
+
+**Análisis de la estructura organizacional**
+
+Se evalúa si la estructura actual de la empresa es adecuada para el desarrollo e implementación del proyecto:
+
+| Aspecto estructural | Situación en Chilalo Shot | Adecuación al proyecto |
+|--------------------|---------------------------|-------------------------|
+| **Tamaño** | 1–2 personas (Gerencia/Dueño y Ventas/Caja). | **Adecuada.** El sistema está dimensionado para pocos usuarios; no se requieren múltiples áreas ni jerarquías complejas. |
+| **Roles** | Dueño asume administración y supervisión; vendedor atiende caja y ventas. | **Adecuada.** Los roles del sistema (Administrador, Vendedor) se alinean con la estructura actual; no exige reestructuración. |
+| **Área de impacto** | Ventas/Caja como área donde se ejecuta el proyecto (según organigrama, §6). | **Adecuada.** La intervención se concentra en una sola área, lo que facilita la coordinación y el seguimiento. |
+| **Toma de decisiones** | Centralizada en el dueño. | **Adecuada.** Facilita la aprobación del proyecto, la asignación de tiempo a capacitación y la adopción del cambio. |
+
+**Evaluación de procesos, actividades y tareas impactadas por la solución**
+
+| Proceso / Actividad / Tarea | Situación actual | Impacto de la solución |
+|-----------------------------|------------------|-------------------------|
+| **Registro de ventas** | Anotación manual en cuaderno; cálculo manual de totales. | Sustituido por POS digital; registro automático; tiempo de venta reducido de 3–5 min a 30–45 s. |
+| **Consulta de precios y stock** | Memoria o búsqueda manual; sin visibilidad en tiempo real. | Consulta inmediata en POS; alertas de stock bajo; sugerencias de productos (IA). |
+| **Emisión de comprobantes** | No se emiten o se hace de forma irregular; multas SUNAT. | Emisión electrónica integrada; cumplimiento normativo automático. |
+| **Control de inventario** | Inexistente o en Excel disperso; sin alertas. | Inventario en tiempo real; alertas y predicción de demanda; reportes de productos próximos a vencer. |
+| **Aplicación de promociones** | Manual o inexistente. | Módulo de promociones y packs; aplicación automática en la venta. |
+| **Reportes y análisis** | No hay reportes sistemáticos; decisiones por intuición. | Dashboard y reportes exportables; insights para compras y ventas. |
+
+Las tareas impactadas son las que hoy generan mayor carga y error; la solución las simplifica o automatiza, lo que favorece la adopción por parte del personal.
+
+**Conclusión operativa:** Los colaboradores tienen el perfil adecuado para asimilar la solución con capacitación y soporte acotados; la estructura organizacional es adecuada para el proyecto y no requiere cambios; los procesos impactados son precisamente los que se buscan mejorar. La factibilidad operativa es **alta**.
+
+---
+
+### 12.3 Análisis costo-beneficio y factibilidad económica
+
+**¿El proyecto es rentable según el diseño de la solución?**
+
+Sí. Con el diseño de solución propuesto (desarrollo a medida, stack en la nube con tiers gratuitos e integración SUNAT), el proyecto es **rentable**: los beneficios esperados superan ampliamente los costos y el retorno de la inversión se produce en un plazo muy corto.
+
+**Análisis de costos**
+
+Presupuesto detallado de todos los costos asociados al proyecto:
+
+| Rubro | Concepto | Costo estimado (USD) | Notas |
+|-------|----------|----------------------|-------|
+| **Software** | Licencias de desarrollo y producción | 0 | React, Spring Boot, PostgreSQL, FastAPI; código abierto. |
+| **Software** | Hosting y base de datos cloud | 0 | Tier gratuito (Render, Supabase/Neon). |
+| **Software** | OSE / facturación electrónica SUNAT | 0–30/mes | Según proveedor; existen opciones gratuitas o de bajo costo. |
+| **Equipos** | Uso de PC/laptop existente | 0 | No se exige equipo nuevo. |
+| **Equipos** | Lector de código de barras (opcional) | 30 | Una sola vez. |
+| **Equipos** | Impresora térmica (opcional) | 80 | Una sola vez. |
+| **Otros** | Dominio, certificado (opcional) | 10–20 | Una sola vez. |
+| **Mano de obra** | Desarrollo | 0 | Proyecto académico. |
+| **Capacitación** | Tiempo del personal | In kind | 1–2 sesiones cortas; asumido por el negocio. |
+| **Total inicial (escenario típico)** | | **30–150** | Aprox. S/. 120–600. |
+| **Total recurrente (mensual)** | | **0–30** | Según OSE elegido. |
+
+**Análisis de beneficios**
+
+Estimación de los beneficios esperados, tangibles e intangibles:
+
+| Tipo | Beneficio | Estimación (anual) / Descripción |
+|------|-----------|-----------------------------------|
+| **Tangible** | Reducción de pérdidas por inventario descontrolado | S/. 9,600 |
+| **Tangible** | Evitar multas SUNAT por falta de comprobantes | S/. 3,000 |
+| **Tangible** | Ventas recuperadas por menor desabastecimiento | S/. 14,400 |
+| **Tangible** | Ganancia por mayor eficiencia y menos errores | S/. 6,000 |
+| **Tangible** | **Total beneficios tangibles estimados** | **S/. 33,000/año** |
+| **Intangible** | Cumplimiento normativo y menor estrés fiscal | Mejor relación con SUNAT; tranquilidad operativa. |
+| **Intangible** | Imagen de negocio formal y tecnificado | Atractivo para clientes corporativos y exigentes. |
+| **Intangible** | Decisiones basadas en datos (reportes, IA) | Mejor compra y surtido; menor desperdicio. |
+| **Intangible** | Experiencia del cliente (menor tiempo de espera) | Mayor satisfacción y posible fidelización. |
+
+**Cálculo costo-beneficio y viabilidad financiera**
+
+| Indicador | Cálculo | Resultado |
+|-----------|---------|-----------|
+| **Costo total de implementación (máximo)** | USD 150 ≈ S/. 600 | Inversión única acotada. |
+| **Beneficios anuales (tangibles)** | Según análisis de impacto (§10.3) | S/. 33,000/año |
+| **Relación beneficio/costo (año 1)** | 33,000 / 600 | **55:1** (los beneficios son 55 veces el costo inicial en el primer año). |
+| **Periodo de recuperación (payback)** | 600 / (33,000/12) | **Menos de 1 mes**. |
+| **Viabilidad financiera** | Beneficios > Costos; payback muy corto | **Viable.** El proyecto es financieramente rentable. |
+
+**Conclusión económica:** El análisis de costos, beneficios y la relación costo-beneficio demuestran que el proyecto es **rentable** y **financieramente viable**. La inversión es baja y los beneficios tangibles e intangibles justifican la implementación desde el punto de vista económico.
+
+---
+
+### Conclusión de la factibilidad del proyecto
+
+En conjunto, la factibilidad del proyecto es un análisis integral que permite determinar si es **posible** (recursos tecnológicos suficientes y riesgos manejables), **viable** (personas y estructura organizacional adecuadas, procesos impactados de forma positiva) y **rentable** (beneficios que superan claramente los costos). Para el Sistema de Gestión de Ventas e Inventario con IA de Chilalo Shot, las tres dimensiones —técnica, operativa y económica— son favorables. Por tanto, **el proyecto es factible** y esta evaluación constituye una herramienta fundamental para la toma de decisiones estratégicas en la gestión del proyecto.
+
+---
+
+## 13. ALTERNATIVAS A SOLUCIÓN PROPUESTA
 
 ### Alternativa 1: Sistema POS Comercial de Marca (Ej. Tiendita, Fact, Siigo)
 
@@ -301,6 +438,267 @@ La propuesta de solución atiende las **tres perspectivas principales**:
 
 ---
 
+# CAPÍTULO II: PLANIFICACIÓN DEL PROYECTO
+
+## 2.1 Enfoque de Gestión del Proyecto y del Ciclo de Vida a Aplicar
+
+Para el éxito del **Sistema Web de Gestión de Ventas e Inventario con IA aplicado a la licorería Chilalo Shot**, se ha determinado una estrategia dual que separa claramente la capa de administración del proyecto de la capa de ingeniería del producto.
+
+### A. Gestión del Proyecto: Marco de Trabajo Scrum
+
+La administración de los recursos, el control del cronograma y la interacción con los interesados se regirá estrictamente bajo Scrum. Este marco gestionará la incertidumbre de los tiempos y la priorización de entregables.
+
+- **Ciclo de Trabajo:** Se operará en iteraciones fijas (Sprints) de 2 semanas.
+- **Control de Avance:** Se utilizarán los artefactos de gestión Product Backlog (Pila de Producto) y Sprint Backlog para monitorear el progreso de las tareas.
+- **Roles de Gestión:**
+  - **Product Owner:** Representante del Dueño/Propietario de Chilalo Shot, encargado de maximizar el valor del negocio y priorizar funcionalidades (POS, inventario, facturación SUNAT, promociones, IA).
+  - **Scrum Master:** Facilitador encargado de eliminar impedimentos administrativos y asegurar el flujo del equipo de desarrollo.
+
+### B. Modelado e Ingeniería del Software: Metodología en Cascada (Waterfall)
+
+La construcción técnica del software, específicamente el análisis, diseño y arquitectura de datos, seguirá un enfoque lineal y secuencial (Cascada). Dado que el sistema maneja transacciones de venta, integración con SUNAT y reglas de negocio críticas (precios, descuentos, stock), no se permite la improvisación en la estructura de datos.
+
+- **Secuencialidad del Modelado:** No se iniciará la programación (fase de Codificación) de ningún módulo hasta que su Modelo de Base de Datos y Diagrama de Clases hayan sido finalizados y validados.
+- **Ciclo de Ingeniería:** Requisitos → Análisis → Diseño (Modelado) → Implementación → Pruebas.
+
+---
+
+## 2.2 Justificación del Enfoque del Proyecto a Aplicar
+
+La selección de este enfoque híbrido responde directamente a la necesidad de satisfacer los objetivos estratégicos del negocio de Chilalo Shot. La metodología no es un fin, sino el medio para asegurar la rentabilidad y la sostenibilidad de la licorería.
+
+### 1. Alineación con la Sostenibilidad Financiera (Reducción de Pérdidas y Cumplimiento SUNAT)
+
+El negocio requiere flujo de caja constante; las multas SUNAT y las pérdidas por inventario impactan la operatividad.
+
+- **Justificación de Negocio:** El uso de Scrum permite priorizar en los primeros Sprints el desarrollo del **Módulo de Punto de Venta (POS)** y del **Módulo de Facturación Electrónica SUNAT**. En lugar de esperar varios meses por un sistema completo (como en un enfoque 100% Cascada), el Dueño tendrá en un plazo acotado una herramienta funcional para registrar ventas y emitir comprobantes, acelerando el Retorno de Inversión (ROI) y reduciendo el riesgo de multas tempranamente.
+
+### 2. Alineación con la Integridad de Datos y Cumplimiento Normativo
+
+La relación con SUNAT y la trazabilidad de ventas e inventario dependen de la precisión de la información. Un error en comprobantes o en stock puede derivar en sanciones o pérdidas.
+
+- **Justificación de Negocio:** El uso de Waterfall para el Modelado garantiza la integridad de los datos. Al diseñar la base de datos de manera secuencial y rigurosa antes de programar, se asegura que las transacciones de venta, el stock y la facturación electrónica sean coherentes y cumplan con la normativa. Esto protege la imagen del negocio frente a clientes y SUNAT, evitando sanciones y rechazos de comprobantes.
+
+### 3. Alineación con la Eficiencia Operativa (Reducción de Costos y Carga Administrativa)
+
+La licorería busca optimizar márgenes reduciendo la carga manual y el tiempo de venta.
+
+- **Justificación de Negocio:** La gestión por Sprints (Scrum) permite identificar rápidamente qué procesos consumen más tiempo (ej. registro de ventas, consulta de precios, inventario) y enfocar los esfuerzos de desarrollo en automatizarlos primero. El modelado robusto (Waterfall) asegura que esta automatización sea escalable y no requiera correcciones costosas en el futuro, protegiendo la inversión (CapEx) y el tiempo de mantenimiento.
+
+---
+
+## 2.3 Arquitectura del Software a Utilizar
+
+La arquitectura se define bajo el principio de diseño robusto (Waterfall) para soportar la gestión evolutiva (Scrum). Se utilizará una **Arquitectura en N-Capas** con el patrón **MVC (Modelo-Vista-Controlador)**.
+
+| Capa del Sistema | Responsabilidad en la Ingeniería (Waterfall) | Tecnologías |
+|------------------|----------------------------------------------|-------------|
+| **Capa de Presentación (Vista)** | Interfaz de usuario. Se diseña al final del flujo de modelado. Debe ser intuitiva para garantizar la adopción del usuario (1-2 empleados). | React (Web responsive); POS con Electron |
+| **Capa de Servicios (Controlador)** | Orquestación de peticiones. Valida la seguridad y formato de los datos antes de procesarlos. | API REST con Spring Boot (Java) |
+| **Capa de Lógica de Negocio (Modelo)** | Núcleo del Modelado. Aquí residen las reglas de negocio (cálculo de totales, promociones, validación de stock). Se define estrictamente en la fase de diseño. | Java (Backend Spring Boot) |
+| **Capa de Datos (Persistencia)** | Base del Sistema. El Modelo Entidad-Relación se congela antes de programar para asegurar integridad referencial (ACID). | PostgreSQL (cloud: Supabase/Neon) |
+| **Capa de Servicios de IA (opcional)** | Recomendaciones y predicción de demanda. Se integra vía API. | Python / FastAPI (servicio desacoplado) |
+
+---
+
+## 2.4 Modelos y Artefactos a Aplicar
+
+Se distinguen los artefactos según su propósito: **Gestión (Scrum)** o **Ingeniería (Waterfall)**.
+
+### Artefactos de Ingeniería y Modelado (Waterfall)
+
+Estos documentos definen la estructura inamovible del software.
+
+1. **Diagrama de Clases (UML):** Plano técnico estático. Define las entidades (Producto, Venta, Cliente, Promoción, Comprobante, etc.) y sus relaciones estrictas. Es el "plano de construcción".
+2. **Modelo Entidad-Relación (MER):** Diseño normalizado de la base de datos. Garantiza que no existan duplicidad de ventas, inconsistencias en el stock ni errores en la facturación electrónica.
+3. **Diccionario de Datos:** Especificación detallada de cada campo (tipo de dato, longitud, restricciones) para asegurar la calidad de la información y la compatibilidad con SUNAT (tipos de documento, series, numeración).
+
+### Artefactos de Gestión y Control (Scrum)
+
+Estos documentos gestionan el avance del proyecto.
+
+1. **Product Backlog (Pila de Producto):** Lista priorizada de necesidades del negocio (Historias de Usuario). Ej.: *"Como Dueño, quiero ver un reporte diario de ventas e ingresos"*; *"Como Vendedor, quiero registrar una venta en menos de 45 segundos"*.
+2. **Sprint Backlog:** Lista de tareas técnicas a realizar en las próximas 2 semanas.
+3. **Incremento:** La funcionalidad terminada y operativa entregada al final de cada Sprint (ej. POS básico, integración con OSE SUNAT).
+4. **Burndown Chart:** Gráfico para medir la velocidad del equipo y proyectar el cumplimiento de fechas clave (entrega de módulos, go-live).
+
+---
+
+## 2.5 Planificación del Proyecto
+
+La planificación del proyecto define cómo se ejecutará, controlará y cerrará el proyecto: alcance, objetivos, cronograma, beneficios, interesados, supuestos, factores críticos de éxito, riesgos y matriz de comunicaciones.
+
+---
+
+### 2.5.1 Enunciado de Alcance del Proyecto (EAP)
+
+#### Descripción del Proyecto
+
+El **Sistema Web de Gestión de Ventas e Inventario con IA aplicado a la licorería Chilalo Shot** es un producto de software que permitirá:
+
+- Registrar ventas en un punto de venta (POS) digital con búsqueda por código de barras, nombre o categoría, cálculo automático de totales y múltiples formas de pago.
+- Gestionar inventario en tiempo real: entradas y salidas, stock actual por producto, alertas de stock bajo y productos próximos a vencer; manejo de packs (sixpack, twelvepack) descomponiendo y registrando en unidades.
+- Emitir boletas y facturas electrónicas integradas con SUNAT mediante OSE.
+- Configurar y aplicar promociones, packs y descuentos por volumen de forma automática en la venta.
+- Generar reportes y dashboard (ventas del día/semana/mes, productos más vendidos, inventario) con exportación a PDF y Excel.
+- Ofrecer recomendaciones con IA (productos complementarios) y predicción de demanda para optimizar compras.
+- Gestionar clientes y programa de fidelización (puntos, canje por descuentos).
+- Operar en modo offline básico en el POS con sincronización al restablecer conexión.
+
+#### Entregables
+
+| Entregable | Descripción |
+|------------|-------------|
+| **Sitio web / aplicación** | Interfaz web adaptable (React); POS con Electron; gestión completa de inventario (unidades y packs); módulo de ventas; facturación electrónica; promociones; reportes; seguridad (JWT, roles). |
+| **Documentación** | Manual de usuario para Dueño y Vendedor; guía técnica de despliegue; documentación de APIs. |
+| **Base de datos** | Esquema en PostgreSQL (cloud); datos migrados o cargados iniciales según catálogo de Chilalo Shot. |
+
+#### Exclusiones del Proyecto
+
+- Diseño gráfico o identidad visual personalizada más allá de una interfaz limpia y usable.
+- Integración con sistemas contables o ERP de terceros (fuera del alcance inicial).
+- Soporte técnico post-lanzamiento más allá de 30 días desde la puesta en producción.
+- Desarrollo de aplicación móvil para clientes finales (opcional en fases posteriores; el POS puede usarse en tablet/navegador).
+
+#### Criterios de Aceptación
+
+- Cumplimiento de los requisitos funcionales (RF-01 a RF-09) y no funcionales (RNF-01 a RNF-05) definidos en el Capítulo I.
+- Compatibilidad con navegadores modernos (Chrome, Edge, Firefox) y con Windows para el POS.
+- Seguridad: autenticación JWT, roles Administrador y Vendedor, encriptación de datos sensibles.
+- Facilidad de uso validada por el Dueño y el empleado (curva de aprendizaje mínima).
+- Documentación de usuario y técnica entregada y revisada.
+
+#### Restricciones del Proyecto
+
+- **Presupuesto:** Inversión acotada (aprox. USD 30–150 en escenario típico; proyecto académico con herramientas en tier gratuito).
+- **Duración:** 14–15 semanas desde el inicio del desarrollo hasta la puesta en producción.
+- **Equipo:** Equipo de desarrollo reducido (1–3 desarrolladores); el cliente (Chilalo Shot) aporta 1–2 usuarios para validación y capacitación.
+
+---
+
+### 2.5.2 Objetivos del Proyecto
+
+#### Objetivo general
+
+Desarrollar e implementar un sistema web y punto de venta con inteligencia artificial que permita a la licorería Chilalo Shot gestionar de manera integral las operaciones de venta, inventario y facturación electrónica, reduciendo pérdidas estimadas (S/. 33,000/año), cumpliendo normativas SUNAT y mejorando la eficiencia operativa en un plazo de 15 semanas.
+
+#### Objetivos específicos
+
+- Diseñar e implementar una interfaz de usuario intuitiva para el POS y el panel de administración, orientada a 1–2 usuarios con curva de aprendizaje mínima.
+- Implementar el control de inventario en tiempo real con registro en unidades, soporte de packs (sixpack, twelvepack) y alertas de stock bajo y productos próximos a vencer.
+- Integrar la emisión de boletas y facturas electrónicas con SUNAT mediante un OSE, garantizando cumplimiento normativo.
+- Desarrollar el módulo de promociones y packs con aplicación automática en la venta y sugerencias de IA para productos complementarios.
+- Entregar reportes y dashboard de ventas e inventario con exportación a PDF y Excel, y documentación de usuario y técnica.
+
+---
+
+### 2.5.3 Beneficios del Proyecto
+
+1. **Reducción de tiempos:** Tiempo de venta reducido de 3–5 minutos a 30–45 segundos; reducción del tiempo diario en gestión manual (de 2–3 horas a aproximadamente 30 minutos).
+2. **Reducción de costos y pérdidas:** Disminución de pérdidas por inventario descontrolado (objetivo: de S/. 800/mes a ~S/. 160/mes); eliminación o reducción drástica de multas SUNAT por falta de comprobantes electrónicos.
+3. **Incremento de la capacidad operativa:** Mayor precisión del inventario (objetivo: de ~70% a 98%); ventas recuperadas por menor desabastecimiento (reducción estimada de S/. 1,200/mes a ~S/. 300/mes en ventas perdidas).
+4. **Incremento de la calidad y satisfacción:** Cumplimiento normativo sostenido; imagen de negocio formal; mejor experiencia del cliente por menor espera y disponibilidad de comprobantes.
+5. **Decisiones basadas en datos:** Reportes y predicción de demanda que permiten optimizar compras y surtido, reduciendo desperdicio y mejorando la rentabilidad.
+
+---
+
+### 2.5.4 Cronograma
+
+A continuación se presenta una representación gráfica del tiempo estimado para las fases y hitos principales del proyecto. Las actividades se ejecutan en Sprints de 2 semanas, alineados con la gestión Scrum, manteniendo el modelado en cascada por módulo antes de la codificación.
+
+```
+CRONOGRAMA DEL PROYECTO — Sistema Chilalo Shot (14–15 semanas)
+================================================================
+
+Fase / Hito                          Semanas  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+------------------------------------------------------------------------------------------
+Inicio y definición (alcance, EAP)    1      [==]
+Modelado y diseño (BD, clases)        2      [======]
+Sprint 1–2: POS básico + inventario   4            [================]
+Sprint 3–4: Facturación SUNAT        4                  [================]
+Sprint 5–6: Promociones + reportes   4                        [================]
+Sprint 7:  IA, fidelización, ajustes  2                              [====]
+Pruebas integradas y UAT              2                                    [====]
+Despliegue y capacitación             1                                          [==]
+Cierre y documentación               1                                            [==]
+------------------------------------------------------------------------------------------
+Hitos: ● Inicio  ● Diseño aprobado  ● POS operativo  ● SUNAT integrado  ● Go-live  ● Cierre
+```
+
+*Figura 1. Cronograma de alto nivel del proyecto (semanas). Cada bloque representa la duración estimada de la fase o del conjunto de Sprints indicados.*
+
+---
+
+### 2.5.5 Interesados (Stakeholders)
+
+| Interesado | Rol en el proyecto | Interés principal |
+|------------|-------------------|-------------------|
+| **Dueño / Propietario (Chilalo Shot)** | Cliente y patrocinador; Product Owner en Scrum | Maximizar rentabilidad; cumplimiento SUNAT; sistema simple y útil |
+| **Empleado / Vendedor** | Usuario final del POS y consultas de inventario | Facilidad de uso; ventas rápidas; menos carga manual |
+| **Clientes de la licorería** | Beneficiarios indirectos | Atención ágil; productos disponibles; comprobantes cuando los requieran |
+| **SUNAT** | Ente regulador | Cumplimiento de facturación electrónica según normativa |
+| **Equipo de desarrollo** | Construcción del producto | Requerimientos claros; feedback oportuno; entregas en tiempo |
+
+---
+
+### 2.5.6 Supuestos
+
+- El Dueño o un representante de Chilalo Shot tendrá disponibilidad para reuniones de seguimiento (al menos semanales) y para validar entregables en los plazos acordados.
+- La conectividad a internet en el establecimiento será suficiente para el uso del sistema web y la comunicación con el OSE de SUNAT; los cortes serán esporádicos y cubiertos por el modo offline del POS.
+- El proveedor OSE (Nubefact, Fact u otro) mantendrá APIs estables y compatibles con la normativa SUNAT vigente durante el periodo del proyecto.
+- Los recursos de cloud en tier gratuito (Render, Supabase/Neon) serán suficientes para el volumen de transacciones esperado de Chilalo Shot (1–2 usuarios, ventas minoristas).
+- El equipo de desarrollo dispondrá del tiempo y los recursos necesarios para cumplir los Sprints en 2 semanas según el plan.
+
+---
+
+### 2.5.7 Restricciones
+
+- **Presupuesto:** Limitado a un rango aproximado de USD 30–150 (hardware opcional adicional); uso prioritario de software y servicios en tier gratuito.
+- **Plazo:** 14–15 semanas desde el inicio del desarrollo hasta el go-live; no se contemplan extensiones significativas.
+- **Recursos humanos:** Equipo de desarrollo reducido (1–3 personas); cliente con 1–2 personas para operación y validación.
+- **Alcance técnico:** No se incluyen integraciones con contabilidad o ERP externos ni aplicación móvil nativa para clientes en la primera entrega.
+
+---
+
+### 2.5.8 Factores Críticos de Éxito (FCE)
+
+1. **Cumplimiento de requisitos:** Entregar las funcionalidades acordadas (POS, inventario en unidades y packs, facturación SUNAT, promociones, reportes, IA básica) dentro del alcance definido en el EAP.
+2. **Gestión eficaz del tiempo:** Respetar los Sprints de 2 semanas y los hitos de cronograma (diseño aprobado, POS operativo, integración SUNAT, go-live) para no retrasar el retorno de inversión del cliente.
+3. **Comunicación eficaz:** Reuniones regulares con el Product Owner (Dueño); uso de la matriz de comunicaciones para informes y decisiones.
+4. **Calidad del modelado:** Completar y validar el modelo de datos y el diseño por módulo antes de codificar, para evitar retrabajos y asegurar integridad de ventas e inventario.
+5. **Adopción por el usuario:** Capacitación y documentación suficientes para que el Dueño y el Vendedor utilicen el sistema con confianza desde el primer día en producción.
+
+---
+
+### 2.5.9 Riesgos
+
+Se utiliza el metalenguaje **Causa – Riesgo – Impacto** para describir los riesgos principales:
+
+| Causa | Riesgo | Impacto |
+|-------|--------|---------|
+| Enfermedad o indisponibilidad prolongada de un miembro del equipo de desarrollo | Retraso en uno o más Sprints; entregables del módulo afectado se atrasan | Fecha de go-live se desplaza; posible reducción temporal de alcance |
+| Cambios en APIs del OSE o en requisitos SUNAT durante el proyecto | Necesidad de ajustar integración de facturación electrónica | Retrabajo en el módulo SUNAT; posible retraso de 1–2 semanas |
+| Falta de disponibilidad del Dueño para validar entregables | Aceptación retrasada; feedback tardío sobre usabilidad o requisitos | Iteraciones adicionales; riesgo de desalineación entre producto y expectativas |
+| Cortes de internet frecuentes o prolongados en el establecimiento | Imposibilidad de emitir comprobantes en tiempo real; desconfianza en el sistema | Mitigación: modo offline y cola de comprobantes; se documenta uso con datos móviles de respaldo |
+| Límites o indisponibilidad del tier gratuito de hosting o base de datos | Caída del servicio o imposibilidad de desplegar actualizaciones | Migración a plan de pago bajo o cambio de proveedor; se mantienen alternativas (Railway, Neon) identificadas |
+
+---
+
+### 2.5.10 Matriz de Comunicaciones
+
+Define quién recibe qué información, con qué frecuencia y por cuál canal.
+
+| Interesado | Información | Formato | Frecuencia | Responsable | Canal |
+|------------|-------------|---------|------------|-------------|--------|
+| Dueño / Cliente (Chilalo Shot) | Informes de avance; estado de entregables | PDF / reunión | Semanal | Gerente de proyecto / Scrum Master | Correo electrónico; reunión virtual |
+| Equipo del proyecto | Seguimiento de tareas; impedimentos | Reunión | Semanal (Daily/ Sprint) | Scrum Master | Presencial / virtual |
+| Patrocinador (Dueño) | Informes de hitos; decisión de go-live | PDF | Al cierre de cada hito (aprox. mensual) | Gerente de proyecto | Email; reunión |
+| Equipo de desarrollo | Tareas del Sprint; definición de “hecho” | Plataforma / tablero | Diario (Sprint) | Product Owner / Scrum Master | Gestor de proyectos (ej. Jira, Trello, Notion) |
+| Usuario final (Vendedor) | Capacitación; novedades del POS | Sesión / guía | Al incorporar módulo; según necesidad | Equipo de desarrollo | Presencial / videollamada; manual de usuario |
+| OSE / Proveedor SUNAT | Consultas técnicas de integración | Documentación / correo | Según necesidad | Desarrollador backend | Email; documentación API |
+
+---
+
 **Documento elaborado por:** [Nombre del Estudiante]  
-**Fecha:** Enero 2025  
+**Fecha:** Enero 2026  
 **Versión:** 1.0

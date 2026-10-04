@@ -65,6 +65,12 @@ public class PackController {
         return ResponseEntity.ok(packService.desactivar(id));
     }
 
+    @DeleteMapping("/{id}/eliminar")
+    @Operation(summary = "Eliminar pack", description = "Elimina físicamente un pack inactivo")
+    public ResponseEntity<ApiResponse<Void>> eliminar(@PathVariable Long id) {
+        return ResponseEntity.ok(packService.eliminar(id));
+    }
+
     @GetMapping("/{id}/calcular-precio")
     @Operation(summary = "Calcular precio sugerido", description = "Calcula el precio sugerido del pack basado en los precios de los productos (10% descuento)")
     public ResponseEntity<ApiResponse<BigDecimal>> calcularPrecioSugerido(@PathVariable Long id) {

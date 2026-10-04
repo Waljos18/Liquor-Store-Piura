@@ -2,6 +2,7 @@ package com.licoreria.service;
 
 import com.licoreria.dto.ApiResponse;
 import com.licoreria.dto.ProductoDTO;
+import com.licoreria.dto.inventario.AlertasResumenDTO;
 import com.licoreria.dto.inventario.MovimientoInventarioDTO;
 import com.licoreria.dto.inventario.StockEquivalenciaPacksDTO;
 import com.licoreria.entity.MovimientoInventario;
@@ -16,11 +17,16 @@ import com.licoreria.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -37,6 +43,7 @@ public class InventarioService {
     private final PackRepository packRepository;
     private final UsuarioRepository usuarioRepository;
 
+    @Transactional(readOnly = true)
     public ApiResponse<Page<MovimientoInventarioDTO>> listarMovimientos(
             Long productoId,
             String tipoMovimiento,
@@ -44,25 +51,38 @@ public class InventarioService {
             Instant fechaHasta,
             Pageable pageable
     ) {
-        Page<MovimientoInventario> page;
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(), pageable.getPageSize(), Sort.by("fecha").descending()
+        );
 
-        if (productoId != null) {
-            page = movimientoRepository.findByProductoId(productoId, pageable);
-        } else if (tipoMovimiento != null && !tipoMovimiento.isBlank()) {
+        MovimientoInventario.TipoMovimiento tipo = null;
+        if (tipoMovimiento != null && !tipoMovimiento.isBlank()) {
             try {
-                page = movimientoRepository.findByTipoMovimiento(
-                        MovimientoInventario.TipoMovimiento.valueOf(tipoMovimiento),
-                        pageable
-                );
+                tipo = MovimientoInventario.TipoMovimiento.valueOf(tipoMovimiento);
             } catch (IllegalArgumentException e) {
-                page = movimientoRepository.findAll(pageable);
+                // Tipo inválido, se ignora el filtro
             }
-        } else if (fechaDesde != null && fechaHasta != null) {
-            page = movimientoRepository.findByFechaBetween(fechaDesde, fechaHasta, pageable);
-        } else {
-            page = movimientoRepository.findAll(pageable);
         }
 
+        final MovimientoInventario.TipoMovimiento tipoFinal = tipo;
+        Specification<MovimientoInventario> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (productoId != null) {
+                predicates.add(cb.equal(root.get("producto").get("id"), productoId));
+            }
+            if (tipoFinal != null) {
+                predicates.add(cb.equal(root.get("tipoMovimiento"), tipoFinal));
+            }
+            if (fechaDesde != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("fecha"), fechaDesde));
+            }
+            if (fechaHasta != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("fecha"), fechaHasta));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<MovimientoInventario> page = movimientoRepository.findAll(spec, sortedPageable);
         List<MovimientoInventarioDTO> content = page.getContent().stream()
                 .map(this::toMovimientoDto)
                 .collect(Collectors.toList());
@@ -102,7 +122,7 @@ public class InventarioService {
     }
 
     @Transactional
-    public ApiResponse<MovimientoInventario> crearMovimientoManual(
+    public ApiResponse<MovimientoInventarioDTO> crearMovimientoManual(
             Long productoId,
             String tipoMovimiento,
             Integer cantidad,
@@ -146,7 +166,7 @@ public class InventarioService {
                 .build();
 
         movimiento = movimientoRepository.save(movimiento);
-        return ApiResponse.ok(movimiento);
+        return ApiResponse.ok(toMovimientoDto(movimiento));
     }
 
     /**
@@ -190,22 +210,21 @@ public class InventarioService {
     }
 
     public ApiResponse<List<ProductoDTO>> obtenerProductosStockBajo() {
-        List<Producto> productos = productoRepository.buscarConFiltros(
-                null, null, true, true, Pageable.unpaged()
-        ).getContent();
+        List<Producto> productos = productoRepository.findByActivoTrue();
 
         List<ProductoDTO> productosDTO = productos.stream()
-                .filter(p -> p.getStockActual() <= p.getStockMinimo())
+                .filter(p -> p.getStockActual() <= 0 ||
+                             (p.getStockMinimo() != null && p.getStockActual() <= p.getStockMinimo()))
                 .map(this::toProductoDto)
                 .collect(Collectors.toList());
 
         return ApiResponse.ok(productosDTO);
     }
 
-    public ApiResponse<List<ProductoDTO>> obtenerProductosProximosVencer() {
-        LocalDate fechaLimite = LocalDate.now().plusDays(30);
+    public ApiResponse<List<ProductoDTO>> obtenerProductosProximosVencer(int dias) {
+        LocalDate fechaLimite = LocalDate.now().plusDays(dias);
         List<Producto> productos = productoRepository.findAll().stream()
-                .filter(p -> p.getFechaVencimiento() != null 
+                .filter(p -> p.getFechaVencimiento() != null
                         && p.getFechaVencimiento().isBefore(fechaLimite)
                         && p.getFechaVencimiento().isAfter(LocalDate.now())
                         && p.getActivo())
@@ -216,6 +235,53 @@ public class InventarioService {
                 .collect(Collectors.toList());
 
         return ApiResponse.ok(productosDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponse<AlertasResumenDTO> obtenerAlertasResumen() {
+        // 1. Stock bajo — ordenado por fecha de actualización descendente (más recientes primero)
+        List<ProductoDTO> stockBajo = productoRepository.findByActivoTrue().stream()
+                .filter(p -> p.getStockActual() <= 0 ||
+                        (p.getStockMinimo() != null && p.getStockActual() <= p.getStockMinimo()))
+                .sorted((a, b) -> {
+                    Instant fa = a.getFechaActualizacion();
+                    Instant fb = b.getFechaActualizacion();
+                    if (fa == null && fb == null) return 0;
+                    if (fa == null) return 1;
+                    if (fb == null) return -1;
+                    return fb.compareTo(fa);
+                })
+                .map(this::toProductoDto)
+                .collect(Collectors.toList());
+
+        // 2. Próximos a vencer (7 días)
+        LocalDate hoy = LocalDate.now();
+        LocalDate limite7 = hoy.plusDays(7);
+        List<ProductoDTO> proximosVencer = productoRepository.findAll().stream()
+                .filter(p -> p.getActivo()
+                        && p.getFechaVencimiento() != null
+                        && !p.getFechaVencimiento().isBefore(hoy)
+                        && p.getFechaVencimiento().isBefore(limite7))
+                .map(this::toProductoDto)
+                .collect(Collectors.toList());
+
+        // 3. Movimientos recientes de las últimas 48 horas (máximo 10)
+        Instant hace48h = Instant.now().minusSeconds(48 * 3600);
+        Pageable top10 = PageRequest.of(0, 10, Sort.by("fecha").descending());
+        List<MovimientoInventarioDTO> movRecientes = movimientoRepository
+                .findRecientesDesdeFecha(hace48h, top10)
+                .stream()
+                .map(this::toMovimientoDto)
+                .collect(Collectors.toList());
+
+        AlertasResumenDTO resumen = AlertasResumenDTO.builder()
+                .stockBajo(stockBajo)
+                .proximosVencer(proximosVencer)
+                .movimientosRecientes(movRecientes)
+                .totalAlertas(stockBajo.size() + proximosVencer.size())
+                .build();
+
+        return ApiResponse.ok(resumen);
     }
 
     /**
@@ -299,6 +365,7 @@ public class InventarioService {
         dto.setFechaVencimiento(producto.getFechaVencimiento());
         dto.setImagen(producto.getImagen());
         dto.setActivo(producto.getActivo());
+        dto.setFechaActualizacion(producto.getFechaActualizacion());
         if (producto.getCategoria() != null) {
             dto.setCategoriaId(producto.getCategoria().getId());
         }

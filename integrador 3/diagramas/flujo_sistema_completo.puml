@@ -1,0 +1,44 @@
+@startuml
+title Diagrama de Flujo - Sistema Chilalo Shot
+
+skinparam activityBackgroundColor #E3F2FD
+skinparam activityBorderColor #1565C0
+
+|#LightBlue|Vendedor Admin|
+start
+:Iniciar sesion;
+:Acceder al sistema;
+
+|#E8F5E9|Punto de Venta|
+:Buscar producto por codigo nombre o categoria;
+:Agregar producto o pack al carrito;
+:Aplicar promociones o descuentos;
+
+if (Stock suficiente?) then (Si)
+  if (Cliente requiere factura?) then (Si)
+    |#FCE4EC|Facturacion|
+    :Emitir factura electronica;
+    :Enviar a SUNAT OSE;
+  else (No)
+    :Emitir boleta electronica;
+    :Enviar a SUNAT OSE;
+  endif
+  :Registrar forma de pago;
+  :Imprimir ticket;
+  |#FFF8E1|Inventario|
+  :Descontar unidades del stock;
+  :Registrar movimiento de salida;
+  if (Cliente registrado?) then (Si)
+    |#EFEBE9|Fidelizacion|
+    :Acumular puntos;
+  endif
+  :Venta registrada;
+else (No)
+  :Mostrar Stock insuficiente;
+  :Venta no completada;
+endif
+
+|#E3F2FD|
+stop
+
+@enduml

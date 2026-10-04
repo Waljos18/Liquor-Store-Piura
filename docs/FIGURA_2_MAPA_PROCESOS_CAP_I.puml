@@ -1,0 +1,58 @@
+@startuml FIGURA_2_MAPA_PROCESOS
+!theme plain
+title Figura 2. Mapa De Procesos (Gestión, Primarios Y Soporte)\nLicorería Chilalo Shot — visión extremo a extremo
+
+top to bottom direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam roundcorner 8
+skinparam ArrowColor #455A64
+skinparam defaultFontName Arial
+
+skinparam package {
+  BorderColor #1565C0
+  FontStyle bold
+}
+
+package "BLOQUE SUPERIOR — PROCESOS DE GESTIÓN\n(Dirección / Estratégicos)" #E3F2FD {
+  rectangle "Planeamiento y políticas\ncomerciales y de TI" as G1
+  rectangle "Metas, presupuesto e\nindicadores (KPI)" as G2
+  rectangle "Revisión por la dirección,\nriesgos y mejora continua" as G3
+  G1 -[hidden]right- G2
+  G2 -[hidden]right- G3
+}
+
+package "BLOQUE CENTRAL — PROCESOS PRIMARIOS\n(Misionales — crean valor al cliente)" #FFF8E1 {
+  rectangle "Ventas y\npunto de venta (POS)" as P1
+  rectangle "Compras a\nproveedores" as P2
+  rectangle "Inventario y\nalmacén" as P3
+  rectangle "Atención al\ncliente" as P4
+  P1 -[hidden]right- P2
+  P2 -[hidden]right- P3
+  P3 -[hidden]right- P4
+}
+
+package "BLOQUE INFERIOR — PROCESOS DE SOPORTE\n(Apoyo)" #E8F5E9 {
+  rectangle "TI, redes y seguridad\nde la información" as S1
+  rectangle "Administración,\nfinanzas y recursos" as S2
+  rectangle "Cumplimiento\n(SUNAT, legal, laboral)" as S3
+  S1 -[hidden]right- S2
+  S2 -[hidden]right- S3
+}
+
+G2 -down-> P2 : Alinea estrategia\ncon operación
+
+S1 -up-> P1 : TI
+S1 -up-> P3
+S2 -up-> P4 : Administración
+S3 -up-> P2 : Cumplimiento\nSUNAT / legal
+
+legend bottom
+  |= Lectura del mapa |
+  | Los **procesos de gestión** definen qué hacer y cómo medirlo. |
+  | Los **procesos primarios** entregan el producto/servicio al cliente. |
+  | Los **procesos de soporte** suministran recursos, TI y cumplimiento. |
+  | Ajuste colores y nombres según la **notación acordada por el curso**. |
+endlegend
+
+@enduml

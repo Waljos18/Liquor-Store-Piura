@@ -5,6 +5,7 @@ import com.licoreria.dto.ClienteDTO;
 import com.licoreria.dto.ProductoDTO;
 import com.licoreria.dto.UsuarioDTO;
 import com.licoreria.dto.venta.*;
+import com.licoreria.dto.venta.CierreCajaDTO;
 import com.licoreria.entity.*;
 import com.licoreria.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +41,8 @@ public class VentaService {
     private final UsuarioRepository usuarioRepository;
     private final MovimientoInventarioRepository movimientoInventarioRepository;
     private final PromocionRepository promocionRepository;
+    private final com.licoreria.repository.CuentaPorCobrarRepository cuentaPorCobrarRepository;
+    private final FidelizacionService fidelizacionService;
 
     private static final BigDecimal IGV_RATE = new BigDecimal("0.18"); // 18% IGV
 
@@ -139,28 +145,59 @@ public class VentaService {
         }
 
         // Aplicar descuento general si existe
-        BigDecimal descuento = request.getDescuento() != null 
-                ? request.getDescuento() 
+        BigDecimal descuento = request.getDescuento() != null
+                ? request.getDescuento()
                 : BigDecimal.ZERO;
-        
-        BigDecimal subtotalConDescuento = subtotal.subtract(descuento);
+
+        // Descuento por canje de puntos
+        BigDecimal descuentoPorPuntos = BigDecimal.ZERO;
+        if (request.getPuntosCanjeados() != null && request.getPuntosCanjeados() > 0) {
+            if (cliente == null) {
+                return ApiResponse.error("INVALID", "Se requiere cliente para canjear puntos");
+            }
+            ApiResponse<BigDecimal> canjeResult = fidelizacionService.validarCanje(
+                    cliente.getId(), request.getPuntosCanjeados(), subtotal);
+            if (!canjeResult.isSuccess()) {
+                return ApiResponse.error(canjeResult.getError().getCode(), canjeResult.getError().getMessage());
+            }
+            descuentoPorPuntos = canjeResult.getData();
+        }
+
+        BigDecimal subtotalConDescuento = subtotal.subtract(descuento).subtract(descuentoPorPuntos);
         if (subtotalConDescuento.compareTo(BigDecimal.ZERO) < 0) {
             subtotalConDescuento = BigDecimal.ZERO;
         }
 
-        // IGV opcional: si aplicarIgv es false, impuesto = 0
-        boolean aplicarIgv = request.getAplicarIgv() == null || Boolean.TRUE.equals(request.getAplicarIgv());
+        // IGV opcional: solo aplica si aplicarIgv es explícitamente true
+        boolean aplicarIgv = Boolean.TRUE.equals(request.getAplicarIgv());
         BigDecimal impuesto = aplicarIgv
                 ? subtotalConDescuento.multiply(IGV_RATE).setScale(2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
         BigDecimal total = subtotalConDescuento.add(impuesto);
 
-        // Validar forma de pago (incluye YAPE, PLIN)
+        // Validar forma de pago (incluye YAPE, PLIN, CREDITO)
         Venta.FormaPago formaPago;
         try {
             formaPago = Venta.FormaPago.valueOf(request.getFormaPago().toUpperCase());
         } catch (IllegalArgumentException e) {
             return ApiResponse.error("INVALID", "Forma de pago no válida: " + request.getFormaPago());
+        }
+
+        // CREDITO requiere cliente
+        if (formaPago == Venta.FormaPago.CREDITO && cliente == null) {
+            return ApiResponse.error("INVALID", "La venta a crédito requiere un cliente registrado");
+        }
+
+        // Validar EFECTIVO: montoRecibido debe ser suficiente para cubrir el total
+        if (formaPago == Venta.FormaPago.EFECTIVO) {
+            if (request.getMontoRecibido() == null) {
+                return ApiResponse.error("INVALID", "Para pago en efectivo debe indicar el monto recibido");
+            }
+            if (request.getMontoRecibido().compareTo(total) < 0) {
+                return ApiResponse.error("INVALID",
+                        String.format("Monto insuficiente: se recibió S/ %.2f pero el total es S/ %.2f",
+                                request.getMontoRecibido(), total));
+            }
         }
 
         // Validar MIXTO: suma de pagosMixtos debe igualar total
@@ -260,9 +297,105 @@ public class VentaService {
             vuelto = request.getMontoRecibido().subtract(total).setScale(2, RoundingMode.HALF_UP);
         }
 
+        // Si es CREDITO, crear cuenta por cobrar
+        if (formaPago == Venta.FormaPago.CREDITO) {
+            com.licoreria.entity.CuentaPorCobrar cuenta = com.licoreria.entity.CuentaPorCobrar.builder()
+                    .venta(venta)
+                    .cliente(cliente)
+                    .montoTotal(total)
+                    .montoPagado(BigDecimal.ZERO)
+                    .saldoPendiente(total)
+                    .estado(com.licoreria.entity.CuentaPorCobrar.Estado.PENDIENTE)
+                    .fechaVencimiento(request.getFechaVencimientoCredito())
+                    .observaciones(request.getObservaciones())
+                    .build();
+            cuentaPorCobrarRepository.save(cuenta);
+        }
+
+        // Fidelización: restar puntos canjeados
+        if (cliente != null && request.getPuntosCanjeados() != null && request.getPuntosCanjeados() > 0) {
+            fidelizacionService.restarPuntosCanje(cliente.getId(), request.getPuntosCanjeados(), venta.getId(), usuario.getId());
+        }
+
+        // Fidelización: acumular puntos (no acumular si hubo canje en esta venta)
+        if (cliente != null && (request.getPuntosCanjeados() == null || request.getPuntosCanjeados() == 0)) {
+            fidelizacionService.acumularPuntos(cliente.getId(), total, venta.getId(), usuario.getId());
+        }
+
         VentaDTO dto = toDto(venta);
         dto.setVuelto(vuelto.compareTo(BigDecimal.ZERO) > 0 ? vuelto : null);
         return ApiResponse.ok(dto);
+    }
+
+    @Transactional(readOnly = true)
+    public CierreCajaDTO getCierreCaja(LocalDate fecha) {
+        Instant desde = fecha.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant hasta = fecha.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+
+        List<Venta> todasVentas = ventaRepository.findByFechaBetweenWithDetalles(desde, hasta);
+        List<Venta> completadas = todasVentas.stream()
+                .filter(v -> v.getEstado() == Venta.Estado.COMPLETADA)
+                .toList();
+
+        long anuladas = todasVentas.stream()
+                .filter(v -> v.getEstado() == Venta.Estado.ANULADA)
+                .count();
+
+        BigDecimal totalVentas = completadas.stream()
+                .map(Venta::getTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal ganancias = BigDecimal.ZERO;
+        for (Venta v : completadas) {
+            for (DetalleVenta d : v.getDetalles()) {
+                if (d.getProducto() != null && d.getPrecioUnitario() != null && d.getCantidad() != null) {
+                    BigDecimal costo = d.getProducto().getPrecioCompra() != null
+                            ? d.getProducto().getPrecioCompra() : BigDecimal.ZERO;
+                    BigDecimal margen = d.getPrecioUnitario().subtract(costo);
+                    ganancias = ganancias.add(margen.multiply(BigDecimal.valueOf(d.getCantidad())));
+                }
+            }
+        }
+
+        Map<String, List<Venta>> porForma = completadas.stream()
+                .collect(Collectors.groupingBy(v -> v.getFormaPago().name()));
+
+        List<CierreCajaDTO.DesglosePagoDTO> desglose = porForma.entrySet().stream()
+                .map(e -> {
+                    CierreCajaDTO.DesglosePagoDTO d = new CierreCajaDTO.DesglosePagoDTO();
+                    d.setFormaPago(e.getKey());
+                    d.setTotal(e.getValue().stream().map(Venta::getTotal)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add));
+                    d.setCantidad(e.getValue().size());
+                    return d;
+                })
+                .sorted(Comparator.comparing(CierreCajaDTO.DesglosePagoDTO::getTotal).reversed())
+                .collect(Collectors.toList());
+
+        Map<Long, List<Venta>> porVendedor = completadas.stream()
+                .collect(Collectors.groupingBy(v -> v.getUsuario().getId()));
+        List<CierreCajaDTO.DesgloseVendedorDTO> desgloseVendedor = porVendedor.entrySet().stream()
+                .map(e -> {
+                    List<Venta> vv = e.getValue();
+                    CierreCajaDTO.DesgloseVendedorDTO d = new CierreCajaDTO.DesgloseVendedorDTO();
+                    d.setVendedor(vv.get(0).getUsuario().getNombre());
+                    d.setRol(vv.get(0).getUsuario().getRol().name());
+                    d.setTotalVentas(vv.stream().map(Venta::getTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
+                    d.setTransacciones(vv.size());
+                    return d;
+                })
+                .sorted(Comparator.comparing(CierreCajaDTO.DesgloseVendedorDTO::getTotalVentas).reversed())
+                .collect(Collectors.toList());
+
+        CierreCajaDTO dto = new CierreCajaDTO();
+        dto.setFecha(fecha);
+        dto.setTotalVentas(totalVentas);
+        dto.setTotalGanancias(ganancias);
+        dto.setTotalTransacciones(completadas.size());
+        dto.setVentasAnuladas(anuladas);
+        dto.setDesglosePorFormaPago(desglose);
+        dto.setVentasPorVendedor(desgloseVendedor);
+        return dto;
     }
 
     private BigDecimal calcularDescuento(Producto producto, Integer cantidad, BigDecimal precioUnitario) {

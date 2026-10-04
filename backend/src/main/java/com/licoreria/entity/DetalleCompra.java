@@ -34,4 +34,8 @@ public class DetalleCompra {
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
+
+    @Column(name = "cantidad_recibida")
+    @Builder.Default
+    private Integer cantidadRecibida = 0;
 }

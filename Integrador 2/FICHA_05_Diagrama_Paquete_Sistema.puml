@@ -1,0 +1,82 @@
+@startuml
+title Diagrama de Paquete de Sistema\n**Sistema Gestión Integral de Licorería - Chilalo Shot**
+
+skinparam packageStyle rectangle
+skinparam package {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontStyle bold
+}
+
+' ========== PAQUETES PRINCIPALES DEL SISTEMA ==========
+package "Sistema Chilalo Shot" {
+
+  package "Interfaz de Usuario" #E8F5E9 {
+    package "Sistema Web\n(React)" as Web #C8E6C9
+    package "Aplicación POS\n(Electron)" as POS #A5D6A7
+  }
+
+  package "Lógica de Negocio\n(Backend - Spring Boot)" as Backend #FFF8E1 {
+
+    package "Módulo de Ventas" as PkgVentas #FFECB3 {
+      [POS / Punto de Venta]
+      [Registro de ventas]
+      [Formas de pago]
+    }
+
+    package "Módulo de Inventario" as PkgInv #FFE0B2 {
+      [Productos y categorías]
+      [Stock y movimientos]
+      [Alertas]
+    }
+
+    package "Módulo de Facturación" as PkgFact #F8BBD9 {
+      [Boletas / Facturas electrónicas]
+      [Integración OSE]
+    }
+
+    package "Módulo de Promociones" as PkgPromo #E1BEE7 {
+      [Promociones y packs]
+      [Aplicación en venta]
+    }
+
+    package "Módulo de Reportes" as PkgReport #B2DFDB {
+      [Dashboard]
+      [Reportes ventas/inventario]
+      [Exportación]
+    }
+
+    package "Módulo de Fidelización" as PkgFidel #D7CCC8 {
+      [Clientes]
+      [Puntos y canje]
+    }
+
+    package "Módulo de IA" as PkgIA #C5CAE9 {
+      [Recomendaciones]
+      [Predicción de demanda]
+    }
+  }
+
+  package "Datos" #E0F2F1 {
+    [Base de datos\n(PostgreSQL)]
+  }
+
+  package "Integraciones Externas" #FCE4EC {
+    [SUNAT / OSE]
+    [Servicio de IA\n(Python/FastAPI)]
+  }
+}
+
+' ========== DEPENDENCIAS ==========
+Web ..> Backend : consume API
+POS ..> Backend : consume API
+Backend ..> [Base de datos\n(PostgreSQL)] : persiste
+PkgFact ..> [SUNAT / OSE] : envía comprobantes
+PkgIA ..> [Servicio de IA\n(Python/FastAPI)] : consulta
+PkgVentas ..> PkgInv : consulta stock
+PkgVentas ..> PkgFact : emite comprobante
+PkgVentas ..> PkgPromo : aplica promoción
+PkgVentas ..> PkgFidel : acumula puntos
+PkgReport ..> PkgIA : insights
+
+@enduml

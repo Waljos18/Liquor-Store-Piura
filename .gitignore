@@ -62,11 +62,23 @@ Desktop.ini
 *.bak
 *.cache
 
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/.idea/
+android/**/*.iml
+
 # Build artifacts
 *.jar
 *.war
 *.ear
 *.class
+
+# Claude Code / Cursor IDE
+.claude/
+.cursor/
 
 # Coverage reports
 coverage/
@@ -84,3 +96,6 @@ yarn.lock
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Instrucciones locales de Claude Code
+CLAUDE.md

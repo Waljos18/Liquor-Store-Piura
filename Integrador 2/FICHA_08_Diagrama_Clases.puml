@@ -1,0 +1,204 @@
+@startuml FICHA_08_Diagrama_Clases_Backend
+!theme plain
+top to bottom direction
+skinparam linetype ortho
+skinparam roundcorner 8
+skinparam classBackgroundColor #F0F4FF
+skinparam classBorderColor #2563EB
+skinparam classFontColor #1E293B
+skinparam classFontSize 11
+skinparam arrowColor #64748B
+skinparam arrowFontColor #475569
+skinparam arrowFontSize 9
+hide circle
+
+title "Diagrama de Clases — Backend Spring Boot\nEntidades JPA (capa entity) | com.licoreria"
+
+' ============================================================
+' ENUMS
+' ============================================================
+
+enum RolEnum {
+  ADMIN
+  VENDEDOR
+}
+
+enum FormaPagoEnum {
+  EFECTIVO
+  TARJETA
+  TRANSFERENCIA
+  YAPE
+  PLIN
+  MIXTO
+  CREDITO
+}
+
+enum EstadoVentaEnum {
+  COMPLETADA
+  ANULADA
+  PENDIENTE
+}
+
+enum TipoDocumentoEnum {
+  DNI
+  RUC
+  CE
+}
+
+' ============================================================
+' ENTIDADES JPA
+' ============================================================
+
+class Usuario {
+  - id : Long
+  - username : String
+  - password : String
+  - nombre : String
+  - email : String
+  - rol : RolEnum
+  - activo : Boolean
+  - fechaCreacion : LocalDateTime
+  - fechaActualizacion : LocalDateTime
+}
+
+class Categoria {
+  - id : Long
+  - nombre : String
+  - descripcion : String
+  - activa : Boolean
+  - fechaCreacion : LocalDateTime
+}
+
+class Producto {
+  - id : Long
+  - codigoBarras : String
+  - nombre : String
+  - marca : String
+  - precioVenta : BigDecimal
+  - precioCompra : BigDecimal
+  - stockActual : Integer
+  - stockMinimo : Integer
+  - stockMaximo : Integer
+  - fechaVencimiento : LocalDate
+  - imagen : String
+  - activo : Boolean
+  - fechaCreacion : LocalDateTime
+  - fechaActualizacion : LocalDateTime
+}
+
+class Cliente {
+  - id : Long
+  - tipoDocumento : TipoDocumentoEnum
+  - numeroDocumento : String
+  - nombre : String
+  - telefono : String
+  - email : String
+  - puntosFidelizacion : Integer
+  - fechaCreacion : LocalDateTime
+  - fechaActualizacion : LocalDateTime
+}
+
+class Venta {
+  - id : Long
+  - numeroVenta : String
+  - fecha : LocalDateTime
+  - subtotal : BigDecimal
+  - descuento : BigDecimal
+  - impuesto : BigDecimal
+  - total : BigDecimal
+  - vuelto : BigDecimal
+  - formaPago : FormaPagoEnum
+  - estado : EstadoVentaEnum
+  - observaciones : String
+  - fechaCreacion : LocalDateTime
+}
+
+class DetalleVenta {
+  - id : Long
+  - cantidad : Integer
+  - precioUnitario : BigDecimal
+  - descuento : BigDecimal
+  - subtotal : BigDecimal
+}
+
+class ComprobantElectronico {
+  - id : Long
+  - tipoComprobante : String
+  - serie : String
+  - numero : String
+  - xmlEnviado : String
+  - estadoSunat : String
+  - fechaEmision : LocalDateTime
+  - fechaEnvio : LocalDateTime
+}
+
+class MovimientoInventario {
+  - id : Long
+  - tipoMovimiento : String
+  - cantidad : Integer
+  - motivo : String
+  - fecha : LocalDateTime
+}
+
+class Pack {
+  - id : Long
+  - nombre : String
+  - precioPack : BigDecimal
+  - activo : Boolean
+  - fechaCreacion : LocalDateTime
+}
+
+class PackProducto {
+  - id : Long
+  - cantidad : Integer
+}
+
+class Promocion {
+  - id : Long
+  - nombre : String
+  - tipo : String
+  - descuentoPorcentaje : BigDecimal
+  - descuentoMonto : BigDecimal
+  - fechaInicio : LocalDateTime
+  - fechaFin : LocalDateTime
+  - activa : Boolean
+}
+
+' ============================================================
+' RELACIONES DE ASOCIACIÓN / COMPOSICIÓN
+' ============================================================
+
+' Enums
+Usuario      ..>  RolEnum            : <<usa>>
+Venta        ..>  FormaPagoEnum      : <<usa>>
+Venta        ..>  EstadoVentaEnum    : <<usa>>
+Cliente      ..>  TipoDocumentoEnum  : <<usa>>
+
+' Producto → Categoria  (ManyToOne)
+Producto     "* productos"  -->  "1 categoria"    Categoria      : categoria
+
+' Venta → Usuario / Cliente  (ManyToOne)
+Venta        "* ventas"     -->  "1 usuario"      Usuario        : usuario
+Venta        "* ventas"     -->  "0..1 cliente"   Cliente        : cliente
+
+' DetalleVenta → Venta / Producto / Pack  (ManyToOne)
+DetalleVenta "* detalles"   -->  "1 venta"        Venta          : venta
+DetalleVenta "* detalles"   -->  "1 producto"     Producto       : producto
+DetalleVenta "* detalles"   -->  "0..1 pack"      Pack           : pack
+
+' Comprobante → Venta  (ManyToOne)
+ComprobantElectronico "* comprobantes" --> "1 venta" Venta       : venta
+
+' MovimientoInventario → Producto / Usuario / Venta  (ManyToOne)
+MovimientoInventario "* movimientos" --> "1 producto"   Producto  : producto
+MovimientoInventario "* movimientos" --> "1 usuario"    Usuario   : usuario
+MovimientoInventario "* movimientos" --> "0..1 venta"   Venta     : venta
+
+' PackProducto → Pack / Producto  (ManyToOne)
+PackProducto "* items"      -->  "1 pack"         Pack           : pack
+PackProducto "* items"      -->  "1 producto"     Producto       : producto
+
+' Promocion ↔ Producto  (ManyToMany via promocion_productos)
+Promocion    "* promociones" --  "* productos"    Producto       : <<ManyToMany>>
+
+@enduml

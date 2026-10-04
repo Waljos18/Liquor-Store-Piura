@@ -1,0 +1,96 @@
+@startuml
+' ER reducido: solo tablas principales del flujo POS / catalogo (diagrama de clases, sin erDiagram).
+!theme plain
+title Diagrama Entidad-Relacion - Tablas Principales\nlicoreria_db (vista simplificada)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #FFFBF0
+  BorderColor #5D4037
+}
+skinparam arrowColor #37474F
+
+class usuarios <<Tabla>> {
+  id : bigint <<PK>>
+  username : varchar
+  email : varchar
+  password : varchar
+  nombre : varchar
+  rol : varchar
+  activo : int
+}
+
+class clientes <<Tabla>> {
+  id : bigint <<PK>>
+  tipo_documento : varchar
+  numero_documento : varchar
+  nombre : varchar
+  telefono : varchar
+  email : varchar
+  puntos_fidelizacion : int
+}
+
+class categorias <<Tabla>> {
+  id : bigint <<PK>>
+  nombre : varchar
+  descripcion : varchar
+  stock_minimo_default : int
+  activa : int
+}
+
+class productos <<Tabla>> {
+  id : bigint <<PK>>
+  codigo_barras : varchar
+  nombre : varchar
+  marca : varchar
+  categoria_id : bigint <<FK>>
+  precio_compra : float
+  precio_venta : float
+  stock_actual : int
+  stock_minimo : int
+  stock_maximo : int
+  fecha_vencimiento : date
+  activo : int
+}
+
+class ventas <<Tabla>> {
+  id : bigint <<PK>>
+  numero_venta : varchar
+  fecha : varchar
+  usuario_id : bigint <<FK>>
+  cliente_id : bigint <<FK>>
+  subtotal : float
+  descuento : float
+  impuesto : float
+  total : float
+  forma_pago : varchar
+  estado : varchar
+  observaciones : varchar
+}
+
+class detalle_ventas <<Tabla>> {
+  id : bigint <<PK>>
+  venta_id : bigint <<FK>>
+  producto_id : bigint <<FK>>
+  cantidad : int
+  precio_unitario : float
+  descuento : float
+  subtotal : float
+}
+
+' Relaciones (hijo --> padre)
+
+ventas "*" --> "1" usuarios
+ventas "*" --> "0..1" clientes
+
+detalle_ventas "*" --> "1" ventas
+detalle_ventas "*" --> "1" productos
+
+productos "*" --> "1" categorias
+
+note bottom
+  Otras tablas del sistema (compras, caja, comprobantes SUNAT,
+  fidelizacion, etc.) se omiten en esta vista.
+end note
+
+@enduml

@@ -1,6 +1,7 @@
 package com.licoreria.controller;
 
 import com.licoreria.dto.ApiResponse;
+import com.licoreria.dto.venta.CierreCajaDTO;
 import com.licoreria.dto.venta.CrearVentaRequest;
 import com.licoreria.dto.venta.VentaDTO;
 import com.licoreria.service.VentaService;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/ventas")
@@ -47,6 +49,14 @@ public class VentaController {
     @Operation(summary = "Obtener venta por ID", description = "Obtiene los detalles completos de una venta")
     public ResponseEntity<ApiResponse<VentaDTO>> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(ventaService.obtenerPorId(id));
+    }
+
+    @GetMapping("/cierre-caja")
+    @Operation(summary = "Cierre de caja", description = "Resumen de ventas, ganancias y desglose por forma de pago del día")
+    public ResponseEntity<ApiResponse<CierreCajaDTO>> cierreCaja(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        if (fecha == null) fecha = LocalDate.now();
+        return ResponseEntity.ok(ApiResponse.ok(ventaService.getCierreCaja(fecha)));
     }
 
     @PutMapping("/{id}/anular")

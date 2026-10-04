@@ -3,6 +3,8 @@ package com.licoreria.controller;
 import com.licoreria.dto.ApiResponse;
 import com.licoreria.dto.auth.LoginRequest;
 import com.licoreria.dto.auth.LoginResponse;
+import com.licoreria.dto.auth.ResetPasswordRequest;
+import com.licoreria.dto.auth.SolicitarResetRequest;
 import com.licoreria.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,5 +49,21 @@ public class AuthController {
     @Operation(summary = "Cerrar sesión")
     public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal(errorOnInvalidType = false) String username) {
         return ResponseEntity.ok(authService.logout(username));
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Solicitar recuperación de contraseña")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody SolicitarResetRequest request) {
+        return ResponseEntity.ok(authService.solicitarReset(request));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Restablecer contraseña con token")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        ApiResponse<Void> res = authService.resetPassword(request);
+        if (!res.isSuccess()) {
+            return ResponseEntity.badRequest().body(res);
+        }
+        return ResponseEntity.ok(res);
     }
 }

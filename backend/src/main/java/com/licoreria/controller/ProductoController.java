@@ -50,6 +50,14 @@ public class ProductoController {
         return ResponseEntity.ok(productoService.buscarParaPos(q));
     }
 
+    @GetMapping("/barcode/{codigo}")
+    @Operation(summary = "Buscar producto por código de barras exacto")
+    public ResponseEntity<ApiResponse<ProductoDTO>> buscarPorBarcode(@PathVariable String codigo) {
+        ApiResponse<ProductoDTO> res = productoService.buscarPorCodigoBarras(codigo);
+        if (!res.isSuccess()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+        return ResponseEntity.ok(res);
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obtener producto por ID")
     public ResponseEntity<ApiResponse<ProductoDTO>> obtener(@PathVariable Long id) {
@@ -98,6 +106,12 @@ public class ProductoController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
         }
         return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/bulk-delete")
+    @Operation(summary = "Desactivar productos en lote (eliminación lógica)")
+    public ResponseEntity<ApiResponse<Void>> eliminarBulk(@RequestBody List<Long> ids) {
+        return ResponseEntity.ok(productoService.eliminarBulk(ids));
     }
 
     @DeleteMapping("/{id}")

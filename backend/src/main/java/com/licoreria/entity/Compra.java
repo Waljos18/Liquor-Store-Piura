@@ -42,13 +42,16 @@ public class Compra {
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     @Builder.Default
-    private Estado estado = Estado.COMPLETADA;
+    private Estado estado = Estado.PENDIENTE;
 
     @Column(columnDefinition = "TEXT")
     private String observaciones;
 
     @Column(name = "fecha_creacion", updatable = false)
     private Instant fechaCreacion;
+
+    @Column(name = "fecha_recepcion")
+    private Instant fechaRecepcion;
 
     @OneToMany(mappedBy = "compra", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -63,6 +66,6 @@ public class Compra {
     }
 
     public enum Estado {
-        COMPLETADA, ANULADA, PENDIENTE
+        PENDIENTE, RECIBIDA, COMPLETADA, ANULADA
     }
 }

@@ -11,6 +11,7 @@ public class DetalleCompraDTO {
     private Long id;
     private ProductoDTO producto;
     private Integer cantidad;
+    private Integer cantidadRecibida;
     private BigDecimal precioUnitario;
     private BigDecimal subtotal;
 }

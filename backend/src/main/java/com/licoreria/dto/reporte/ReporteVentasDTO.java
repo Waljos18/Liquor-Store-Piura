@@ -14,6 +14,7 @@ public class ReporteVentasDTO {
     private BigDecimal ganancias;  // suma de (precio venta − precio compra) por unidad en el período
     private List<VentaPorDiaDTO> ventasPorDia;
     private List<VentaPorFormaPagoDTO> ventasPorFormaPago;
+    private List<VentasPorCategoriaDTO> ventasPorCategoria;
 
     @Data
     public static class VentaPorDiaDTO {
@@ -27,5 +28,26 @@ public class ReporteVentasDTO {
         private String formaPago;
         private BigDecimal total;
         private long cantidad;
+    }
+
+    @Data
+    public static class VentasPorCategoriaDTO {
+        private String categoria;
+        private BigDecimal total;
+        private long cantidadVendida;
+    }
+
+    private BigDecimal totalGastos;
+    private BigDecimal gananciaNeta;  // ganancias - totalGastos
+
+    private List<VentasPorVendedorDTO> ventasPorVendedor;
+
+    @Data
+    public static class VentasPorVendedorDTO {
+        private String vendedor;
+        private String rol;
+        private BigDecimal totalVentas;
+        private long transacciones;
+        private BigDecimal ticketPromedio;
     }
 }

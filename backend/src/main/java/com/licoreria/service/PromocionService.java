@@ -10,7 +10,9 @@ import com.licoreria.repository.PromocionRepository;
 import com.licoreria.repository.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,22 +28,28 @@ public class PromocionService {
     private final PromocionRepository promocionRepository;
     private final ProductoRepository productoRepository;
 
+    @Transactional(readOnly = true)
     public ApiResponse<Page<PromocionDTO>> listar(Boolean soloActivas, Pageable pageable) {
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id").descending()
+        );
         Page<Promocion> page;
         if (soloActivas != null && soloActivas) {
-            page = promocionRepository.findByActivaTrue(pageable);
+            page = promocionRepository.findPromocionesActivasConFecha(LocalDateTime.now(), sortedPageable);
         } else {
-            page = promocionRepository.findAll(pageable);
+            page = promocionRepository.findAll(sortedPageable);
         }
         return ApiResponse.ok(page.map(this::toDto));
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<PromocionDTO> obtenerPorId(Long id) {
         return promocionRepository.findById(id)
                 .map(p -> ApiResponse.ok(toDto(p)))
                 .orElse(ApiResponse.error("NOT_FOUND", "Promoción no encontrada"));
     }
 
+    @Transactional(readOnly = true)
     public ApiResponse<List<PromocionDTO>> obtenerPromocionesActivasPorProducto(Long productoId) {
         List<Promocion> promociones = promocionRepository.findPromocionesActivasByProducto(
                 productoId, 
@@ -163,6 +171,18 @@ public class PromocionService {
         return ApiResponse.ok(null, "Promoción desactivada exitosamente");
     }
 
+    @Transactional
+    public ApiResponse<Void> eliminar(Long id) {
+        Promocion promocion = promocionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Promoción no encontrada"));
+        if (promocion.getActiva()) {
+            return ApiResponse.error("INVALID", "Solo se pueden eliminar promociones inactivas");
+        }
+        promocionRepository.delete(promocion);
+        return ApiResponse.ok(null, "Promoción eliminada exitosamente");
+    }
+
+    @Transactional(readOnly = true)
     public ApiResponse<PromocionDTO> aplicarPromocion(Long promocionId, Long productoId, Integer cantidad) {
         Promocion promocion = promocionRepository.findById(promocionId)
                 .orElseThrow(() -> new RuntimeException("Promoción no encontrada"));

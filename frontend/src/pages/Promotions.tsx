@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -8,6 +9,7 @@ import {
   crearPromocion,
   actualizarPromocion,
   desactivarPromocion,
+  eliminarPromocion,
   fetchProductos,
   fetchCategorias,
   buscarProductos,
@@ -16,6 +18,7 @@ import {
   crearPack,
   actualizarPack,
   desactivarPack,
+  eliminarPack,
   type PromocionDTO,
   type CrearPromocionRequest,
   type ProductoDTO,
@@ -49,6 +52,8 @@ interface PackFormItem {
 }
 
 export const Promotions = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.rol === 'ADMIN';
   const [activeTab, setActiveTab] = useState<TabId>('promociones');
 
   const [items, setItems] = useState<PromocionDTO[]>([]);
@@ -59,7 +64,7 @@ export const Promotions = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [productos, setProductos] = useState<ProductoDTO[]>([]);
-  const [categorias, setCategorias] = useState<CategoriaDTO[]>([]);
+  const [_categorias, setCategorias] = useState<CategoriaDTO[]>([]);
 
   const [packs, setPacks] = useState<PackDTO[]>([]);
   const [loadingPacks, setLoadingPacks] = useState(false);
@@ -159,8 +164,8 @@ export const Promotions = () => {
       tipo: p.tipo ?? 'DESCUENTO_PORCENTAJE',
       descuentoPorcentaje: p.descuentoPorcentaje != null ? String(p.descuentoPorcentaje) : '',
       descuentoMonto: p.descuentoMonto != null ? String(p.descuentoMonto) : '',
-      fechaInicio: p.fechaInicio ? p.fechaInicio.slice(0, 19) : toLocalDateTimeStr(new Date()),
-      fechaFin: p.fechaFin ? p.fechaFin.slice(0, 19) : toLocalDateTimeStr(new Date()),
+      fechaInicio: p.fechaInicio ? p.fechaInicio.slice(0, 10) + 'T00:00:00' : toLocalDateTimeStr(new Date()),
+      fechaFin: p.fechaFin ? p.fechaFin.slice(0, 10) + 'T00:00:00' : toLocalDateTimeStr(new Date()),
       productos: productosForm.length ? productosForm : [],
     });
     setError(null);
@@ -182,8 +187,8 @@ export const Promotions = () => {
       setError('Indique el descuento en monto');
       return;
     }
-    const fechaInicio = form.fechaInicio.slice(0, 19);
-    const fechaFin = form.fechaFin.slice(0, 19);
+    const fechaInicio = form.fechaInicio.slice(0, 10);
+    const fechaFin = form.fechaFin.slice(0, 10);
     if (new Date(fechaFin) <= new Date(fechaInicio)) {
       setError('La fecha de fin debe ser posterior a la de inicio');
       return;
@@ -194,8 +199,8 @@ export const Promotions = () => {
     const body: CrearPromocionRequest = {
       nombre: form.nombre.trim(),
       tipo,
-      fechaInicio,
-      fechaFin,
+      fechaInicio: form.fechaInicio,
+      fechaFin: form.fechaFin,
       productos: form.productos.map((pr) => ({
         productoId: pr.productoId,
         cantidadMinima: pr.cantidadMinima,
@@ -234,6 +239,13 @@ export const Promotions = () => {
     const res = await desactivarPromocion(p.id);
     if (res.success) load();
     else alert(res.error?.message ?? 'Error al desactivar');
+  };
+
+  const eliminarPromocionHandler = async (p: PromocionDTO) => {
+    if (!confirm(`¿Eliminar permanentemente la promoción "${p.nombre}"? Esta acción no se puede deshacer.`)) return;
+    const res = await eliminarPromocion(p.id);
+    if (res.success) load();
+    else alert(res.error?.message ?? 'Error al eliminar');
   };
 
   const addProductoToForm = () => {
@@ -319,10 +331,11 @@ export const Promotions = () => {
     setFormPack((f) => ({ ...f, productos: f.productos.filter((_, i) => i !== idx) }));
   };
 
-  const precioSugeridoPack = formPack.productos.reduce(
+  const precioTotalSinDescuento = formPack.productos.reduce(
     (sum, it) => sum + it.precioVenta * it.cantidad,
     0
-  ) * 0.9;
+  );
+  const precioSugeridoPack = precioTotalSinDescuento * 0.9;
 
   const usePrecioSugerido = () => {
     setFormPack((f) => ({ ...f, precioPack: precioSugeridoPack.toFixed(2) }));
@@ -377,6 +390,13 @@ export const Promotions = () => {
     else alert(res.error?.message ?? 'Error al desactivar');
   };
 
+  const eliminarPackHandler = async (pack: PackDTO) => {
+    if (!confirm(`¿Eliminar permanentemente el pack "${pack.nombre}"? Esta acción no se puede deshacer.`)) return;
+    const res = await eliminarPack(pack.id);
+    if (res.success) loadPacks();
+    else alert(res.error?.message ?? 'Error al eliminar');
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
@@ -400,13 +420,13 @@ export const Promotions = () => {
               Packs
             </button>
           </div>
-          {activeTab === 'promociones' && (
+          {isAdmin && activeTab === 'promociones' && (
             <Button onClick={openNew}>
               <Plus size={18} className="mr-2" />
               Nueva Promoción
             </Button>
           )}
-          {activeTab === 'packs' && (
+          {isAdmin && activeTab === 'packs' && (
             <Button onClick={openNewPack}>
               <Plus size={18} className="mr-2" />
               Nuevo Pack
@@ -444,12 +464,35 @@ export const Promotions = () => {
                           {pack.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </div>
-                      <p className="text-xl font-semibold text-primary mb-2">S/ {(pack.precioPack ?? 0).toFixed(2)}</p>
+                      {(() => {
+                        const origTotal = (pack.productos ?? []).reduce(
+                          (s, pp) => s + pp.cantidad * (pp.producto?.precioVenta ?? 0), 0
+                        );
+                        const dcto = origTotal > pack.precioPack && origTotal > 0
+                          ? Math.round((origTotal - pack.precioPack) / origTotal * 100)
+                          : 0;
+                        return (
+                          <div className="mb-2">
+                            {origTotal > pack.precioPack && (
+                              <p className="text-sm text-text-secondary line-through">S/ {origTotal.toFixed(2)}</p>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <p className="text-xl font-semibold text-primary">S/ {(pack.precioPack ?? 0).toFixed(2)}</p>
+                              {dcto > 0 && (
+                                <span className="px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700">-{dcto}%</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {pack.productos?.length ? (
                         <ul className="text-sm text-text-secondary space-y-0.5 mb-4">
                           {pack.productos.slice(0, 5).map((pp, i) => (
-                            <li key={i}>
-                              {pp.cantidad}× {pp.producto?.nombre ?? 'Producto'}
+                            <li key={i} className="flex justify-between">
+                              <span>{pp.cantidad}× {pp.producto?.nombre ?? 'Producto'}</span>
+                              {pp.producto?.precioVenta != null && (
+                                <span className="ml-2">S/ {(pp.cantidad * pp.producto.precioVenta).toFixed(2)}</span>
+                              )}
                             </li>
                           ))}
                           {(pack.productos?.length ?? 0) > 5 && (
@@ -457,18 +500,25 @@ export const Promotions = () => {
                           )}
                         </ul>
                       ) : null}
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => openEditPack(pack)}>
-                          <Edit size={14} className="mr-1" />
-                          Editar
-                        </Button>
-                        {pack.activo && (
-                          <Button variant="outline" size="sm" className="text-error" onClick={() => desactivarPackHandler(pack)}>
-                            <Trash2 size={14} className="mr-1" />
-                            Desactivar
+                      {isAdmin && (
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => openEditPack(pack)}>
+                            <Edit size={14} className="mr-1" />
+                            Editar
                           </Button>
-                        )}
-                      </div>
+                          {pack.activo ? (
+                            <Button variant="outline" size="sm" className="text-error" onClick={() => desactivarPackHandler(pack)}>
+                              <Trash2 size={14} className="mr-1" />
+                              Desactivar
+                            </Button>
+                          ) : (
+                            <Button variant="outline" size="sm" className="text-red-700 border-red-300 bg-red-50 hover:bg-red-100" onClick={() => eliminarPackHandler(pack)}>
+                              <Trash2 size={14} className="mr-1" />
+                              Eliminar
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -521,18 +571,25 @@ export const Promotions = () => {
                     Válido: {promo.fechaInicio?.slice(0, 10)} — {promo.fechaFin?.slice(0, 10)}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => openEdit(promo)}>
-                    <Edit size={16} className="mr-1" />
-                    Editar
-                  </Button>
-                  {promo.activa && (
-                    <Button variant="outline" size="sm" className="text-error" onClick={() => desactivar(promo)}>
-                      <Trash2 size={16} className="mr-1" />
-                      Desactivar
+                {isAdmin && (
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => openEdit(promo)}>
+                      <Edit size={16} className="mr-1" />
+                      Editar
                     </Button>
-                  )}
-                </div>
+                    {promo.activa ? (
+                      <Button variant="outline" size="sm" className="text-error" onClick={() => desactivar(promo)}>
+                        <Trash2 size={16} className="mr-1" />
+                        Desactivar
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" className="text-red-700 border-red-300 bg-red-50 hover:bg-red-100" onClick={() => eliminarPromocionHandler(promo)}>
+                        <Trash2 size={16} className="mr-1" />
+                        Eliminar
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -691,13 +748,27 @@ export const Promotions = () => {
                 placeholder="0.00"
               />
               {formPack.productos.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm text-text-secondary">
-                    Precio sugerido (10% dto): S/ {precioSugeridoPack.toFixed(2)}
-                  </span>
-                  <Button variant="outline" size="sm" onClick={usePrecioSugerido}>
-                    Usar precio sugerido
-                  </Button>
+                <div className="bg-background rounded-lg p-3 space-y-1.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">Total individual:</span>
+                    <span className="font-medium">S/ {precioTotalSinDescuento.toFixed(2)}</span>
+                  </div>
+                  {parseFloat(formPack.precioPack) > 0 && precioTotalSinDescuento > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">Descuento real:</span>
+                      <span className={`font-semibold ${parseFloat(formPack.precioPack) < precioTotalSinDescuento ? 'text-green-600' : 'text-red-500'}`}>
+                        {((precioTotalSinDescuento - parseFloat(formPack.precioPack)) / precioTotalSinDescuento * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between border-t border-border pt-1.5">
+                    <span className="text-text-secondary">
+                      Sugerido (-10%): <strong className="text-foreground">S/ {precioSugeridoPack.toFixed(2)}</strong>
+                    </span>
+                    <Button variant="outline" size="sm" onClick={usePrecioSugerido}>
+                      Usar
+                    </Button>
+                  </div>
                 </div>
               )}
               <div>

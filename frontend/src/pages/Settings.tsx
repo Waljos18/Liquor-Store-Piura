@@ -1,28 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Settings as SettingsIcon, Printer, Tag, Users, Package, Truck, CreditCard, User, FileText } from 'lucide-react';
+import { Settings as SettingsIcon, Printer, Tag, Users, Truck, CreditCard, User, FileText, Bell, Gift } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { CategoriasSettings } from '../components/settings/CategoriasSettings';
 import { ClientesSettings } from '../components/settings/ClientesSettings';
-import { ProductosSettings } from '../components/settings/ProductosSettings';
 import { ProveedoresSettings } from '../components/settings/ProveedoresSettings';
 import { UsuariosSettings } from '../components/settings/UsuariosSettings';
+import { MetodosPagoSettings } from '../components/settings/MetodosPagoSettings';
+import { RecibosSettings } from '../components/settings/RecibosSettings';
+import { AlertasSettings } from '../components/settings/AlertasSettings';
+import { FidelizacionSettings } from '../components/settings/FidelizacionSettings';
 
-type TabId = 'categorias' | 'clientes' | 'productos' | 'proveedores' | 'metodos-pago' | 'usuarios' | 'recibos' | 'impresoras';
+type TabId = 'categorias' | 'clientes' | 'proveedores' | 'metodos-pago' | 'usuarios' | 'recibos' | 'impresoras' | 'alertas' | 'fidelizacion';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'categorias', label: 'Categorías', icon: Tag },
   { id: 'clientes', label: 'Clientes', icon: Users },
-  { id: 'productos', label: 'Productos', icon: Package },
   { id: 'proveedores', label: 'Proveedores', icon: Truck },
   { id: 'metodos-pago', label: 'Métodos de pago', icon: CreditCard },
   { id: 'usuarios', label: 'Usuarios', icon: User },
   { id: 'recibos', label: 'Config. Recibos', icon: FileText },
   { id: 'impresoras', label: 'Impresoras', icon: Printer },
+  { id: 'alertas', label: 'Alertas', icon: Bell },
+  { id: 'fidelizacion', label: 'Fidelización', icon: Gift },
 ];
 
-const VALID_TABS: TabId[] = ['categorias', 'clientes', 'productos', 'proveedores', 'metodos-pago', 'usuarios', 'recibos', 'impresoras'];
+const VALID_TABS: TabId[] = ['categorias', 'clientes', 'proveedores', 'metodos-pago', 'usuarios', 'recibos', 'impresoras', 'alertas', 'fidelizacion'];
 
 export const Settings = () => {
   const { user } = useAuth();
@@ -89,33 +93,12 @@ export const Settings = () => {
           <CardContent>
             {tab === 'categorias' && <CategoriasSettings />}
             {tab === 'clientes' && <ClientesSettings />}
-            {tab === 'productos' && <ProductosSettings />}
             {tab === 'proveedores' && <ProveedoresSettings />}
-            {tab === 'metodos-pago' && (
-              <div className="space-y-3 text-text-secondary">
-                <p>Métodos de pago disponibles en el POS y ventas:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li><strong>Efectivo</strong> — Pago en billetes y monedas</li>
-                  <li><strong>Tarjeta</strong> — Débito o crédito</li>
-                  <li><strong>Transferencia</strong> — Transferencia bancaria</li>
-                  <li><strong>Yape</strong> / <strong>Plin</strong> — Billeteras digitales</li>
-                  <li><strong>Mixto</strong> — Combinación de varios métodos</li>
-                </ul>
-                <p className="text-sm mt-4">La habilitación o deshabilitación de métodos se podrá configurar aquí en una próxima versión.</p>
-              </div>
-            )}
+            {tab === 'metodos-pago' && <MetodosPagoSettings />}
             {tab === 'usuarios' && <UsuariosSettings />}
-            {tab === 'recibos' && (
-              <div className="space-y-3 text-text-secondary">
-                <p>Configuración de comprobantes (boletas y facturas):</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Serie de boleta (ej. B001) y numeración</li>
-                  <li>Serie de factura (ej. F001)</li>
-                  <li>Datos de la empresa: razón social, RUC, dirección</li>
-                </ul>
-                <p className="text-sm mt-4">Estos datos se usarán al generar PDF y XML para SUNAT. Configuración editable en una próxima versión.</p>
-              </div>
-            )}
+            {tab === 'recibos' && <RecibosSettings />}
+            {tab === 'alertas' && <AlertasSettings />}
+            {tab === 'fidelizacion' && <FidelizacionSettings />}
             {tab === 'impresoras' && (
               <div className="space-y-3 text-text-secondary">
                 <p>Configuración de impresoras para:</p>

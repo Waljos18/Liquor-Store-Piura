@@ -1,0 +1,41 @@
+@startuml Casos_Uso_Resumido_Chilalo_Shot
+!theme plain
+title Diagrama de Casos de Uso (Resumido)\nSistema Chilalo Shot - Vista por Módulos
+
+left to right direction
+
+actor "Administrador" as Admin
+actor "Vendedor" as Vendedor
+actor "Cliente" as Cliente
+
+rectangle "Sistema de Gestión Licorería Chilalo Shot" as Sistema {
+
+  use case "Autenticación\n(login, usuarios)" as UC_Auth
+  use case "Punto de venta\n(registrar venta, pagos, ticket)" as UC_POS
+  use case "Inventario\n(productos, stock, alertas)" as UC_Inv
+  use case "Facturación electrónica\n(boletas, facturas SUNAT)" as UC_Fact
+  use case "Promociones y packs\n(crear, aplicar)" as UC_Promo
+  use case "Reportes y dashboard\n(ventas, inventario, exportar)" as UC_Rep
+  use case "Recomendaciones y\npredicción con IA" as UC_IA
+  use case "Fidelización\n(clientes, puntos)" as UC_Fid
+}
+
+Admin --> UC_Auth
+Admin --> UC_POS
+Admin --> UC_Inv
+Admin --> UC_Fact
+Admin --> UC_Promo
+Admin --> UC_Rep
+Admin --> UC_IA
+Admin --> UC_Fid
+
+Vendedor --> UC_Auth
+Vendedor --> UC_POS
+Vendedor --> UC_Inv
+Vendedor --> UC_Fact
+Vendedor --> UC_IA
+Vendedor --> UC_Fid
+
+Cliente --> UC_Fid
+
+@enduml

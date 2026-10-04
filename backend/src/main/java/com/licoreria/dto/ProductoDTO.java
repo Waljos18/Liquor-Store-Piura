@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 
 @Data
@@ -42,4 +43,5 @@ public class ProductoDTO {
     private LocalDate fechaVencimiento;
     private String imagen;
     private Boolean activo;
+    private Instant fechaActualizacion;
 }

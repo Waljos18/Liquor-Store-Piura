@@ -1,0 +1,32 @@
+@startuml
+title Flujo de entrada de inventario - Chilalo Shot
+
+skinparam activityBackgroundColor #FFF8E1
+skinparam activityBorderColor #F9A825
+
+|Administrador|
+start
+:Registrar entrada de productos;
+
+if (Entrada es pack?) then (Si)
+  :Sistema identifica pack y unidades;
+  :Descompone pack en unidades;
+  :Incrementa stock por unidad;
+else (No)
+  :Ingresar cantidad de unidades;
+  :Incrementa stock;
+endif
+
+:Registrar movimiento ENTRADA;
+:Actualizar stock actual;
+
+if (Stock menor a minimo?) then (Si)
+  :Generar alerta stock bajo;
+endif
+if (Productos por vencer?) then (Si)
+  :Generar alerta por vencer;
+endif
+
+stop
+
+@enduml

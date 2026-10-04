@@ -1,0 +1,248 @@
+@startuml
+!theme plain
+title Diagrama Conceptual de Base de Datos\nModelo tipo Chen - Sistema POS/ERP Licoreria Chilalo
+
+left to right direction
+skinparam shadowing false
+skinparam linetype ortho
+skinparam defaultFontName Arial
+skinparam rectangle {
+  BackgroundColor #FDFDFD
+  BorderColor #444444
+  RoundCorner 0
+}
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #555555
+}
+skinparam diamond {
+  BackgroundColor #FAFAFA
+  BorderColor #444444
+}
+
+' ===== ENTIDADES PRINCIPALES =====
+rectangle "USUARIOS" as usuarios
+rectangle "CLIENTES" as clientes
+rectangle "CATEGORIAS" as categorias
+rectangle "PRODUCTOS" as productos
+rectangle "VENTAS" as ventas
+rectangle "PROVEEDORES" as proveedores
+rectangle "COMPRAS" as compras
+rectangle "PROMOCIONES" as promociones
+rectangle "PACKS" as packs
+rectangle "DEVOLUCIONES" as devoluciones
+rectangle "CUENTAS_POR_COBRAR" as cuentas
+rectangle "PAGOS_CUENTA" as pagos
+rectangle "APERTURAS_CAJA" as caja
+rectangle "GASTOS" as gastos
+rectangle "MERMAS" as mermas
+rectangle "PUNTOS_MOVIMIENTOS" as puntos
+rectangle "PASSWORD_RESET_TOKENS" as tokens
+
+' ===== ATRIBUTOS =====
+usecase "(id)" as u_id
+usecase "(username)" as u_username
+usecase "(email)" as u_email
+usecase "(rol)" as u_rol
+usuarios -- u_id
+usuarios -- u_username
+usuarios -- u_email
+usuarios -- u_rol
+
+usecase "(id)" as c_id
+usecase "(numero_documento)" as c_doc
+usecase "(nombre)" as c_nombre
+usecase "(telefono)" as c_telefono
+clientes -- c_id
+clientes -- c_doc
+clientes -- c_nombre
+clientes -- c_telefono
+
+usecase "(id)" as cat_id
+usecase "(nombre)" as cat_nombre
+categorias -- cat_id
+categorias -- cat_nombre
+
+usecase "(id)" as p_id
+usecase "(codigo_barras)" as p_codigo
+usecase "(nombre)" as p_nombre
+usecase "(precio_venta)" as p_precio
+usecase "(stock_actual)" as p_stock
+productos -- p_id
+productos -- p_codigo
+productos -- p_nombre
+productos -- p_precio
+productos -- p_stock
+
+usecase "(id)" as v_id
+usecase "(numero_venta)" as v_numero
+usecase "(fecha)" as v_fecha
+usecase "(total)" as v_total
+ventas -- v_id
+ventas -- v_numero
+ventas -- v_fecha
+ventas -- v_total
+
+usecase "(id)" as pr_id
+usecase "(razon_social)" as pr_nombre
+usecase "(ruc)" as pr_ruc
+proveedores -- pr_id
+proveedores -- pr_nombre
+proveedores -- pr_ruc
+
+usecase "(id)" as co_id
+usecase "(numero_compra)" as co_numero
+usecase "(fecha)" as co_fecha
+usecase "(total)" as co_total
+compras -- co_id
+compras -- co_numero
+compras -- co_fecha
+compras -- co_total
+
+usecase "(id)" as promo_id
+usecase "(nombre)" as promo_nombre
+usecase "(tipo)" as promo_tipo
+promociones -- promo_id
+promociones -- promo_nombre
+promociones -- promo_tipo
+
+usecase "(id)" as pack_id
+usecase "(nombre)" as pack_nombre
+usecase "(precio_pack)" as pack_precio
+packs -- pack_id
+packs -- pack_nombre
+packs -- pack_precio
+
+usecase "(id)" as d_id
+usecase "(numero_devolucion)" as d_numero
+usecase "(motivo)" as d_motivo
+devoluciones -- d_id
+devoluciones -- d_numero
+devoluciones -- d_motivo
+
+usecase "(id)" as cc_id
+usecase "(saldo_pendiente)" as cc_saldo
+usecase "(estado)" as cc_estado
+cuentas -- cc_id
+cuentas -- cc_saldo
+cuentas -- cc_estado
+
+usecase "(id)" as pg_id
+usecase "(monto)" as pg_monto
+usecase "(forma_pago)" as pg_forma
+pagos -- pg_id
+pagos -- pg_monto
+pagos -- pg_forma
+
+usecase "(id)" as cj_id
+usecase "(fecha)" as cj_fecha
+usecase "(monto_inicial)" as cj_inicial
+caja -- cj_id
+caja -- cj_fecha
+caja -- cj_inicial
+
+usecase "(id)" as g_id
+usecase "(descripcion)" as g_desc
+usecase "(monto)" as g_monto
+gastos -- g_id
+gastos -- g_desc
+gastos -- g_monto
+
+usecase "(id)" as m_id
+usecase "(cantidad)" as m_cantidad
+usecase "(motivo)" as m_motivo
+mermas -- m_id
+mermas -- m_cantidad
+mermas -- m_motivo
+
+usecase "(id)" as pt_id
+usecase "(tipo)" as pt_tipo
+usecase "(cantidad)" as pt_cantidad
+puntos -- pt_id
+puntos -- pt_tipo
+puntos -- pt_cantidad
+
+usecase "(id)" as t_id
+usecase "(token)" as t_token
+usecase "(expira_en)" as t_expira
+tokens -- t_id
+tokens -- t_token
+tokens -- t_expira
+
+' ===== RELACIONES TIPO CHEN =====
+rectangle "REGISTRA" as rel_registra <<relation>>
+rectangle "ATIENDE" as rel_atiende <<relation>>
+rectangle "PERTENECE" as rel_pertenece <<relation>>
+rectangle "CONTIENE" as rel_contiene <<relation>>
+rectangle "ABASTECE" as rel_abastece <<relation>>
+rectangle "REALIZA" as rel_realiza <<relation>>
+rectangle "INCLUYE" as rel_incluye <<relation>>
+rectangle "APLICA" as rel_aplica <<relation>>
+rectangle "FORMA" as rel_forma <<relation>>
+rectangle "GENERA" as rel_genera <<relation>>
+rectangle "PAGA" as rel_paga <<relation>>
+rectangle "DEVUELVE" as rel_devuelve <<relation>>
+rectangle "AFECTA" as rel_afecta <<relation>>
+rectangle "ACUMULA" as rel_acumula <<relation>>
+rectangle "RESTAURA" as rel_restaura <<relation>>
+
+usuarios -- "1" rel_registra
+rel_registra -- "N" ventas
+
+clientes -- "1" rel_atiende
+rel_atiende -- "N" ventas
+
+categorias -- "1" rel_pertenece
+rel_pertenece -- "N" productos
+
+ventas -- "1" rel_contiene
+rel_contiene -- "N" productos
+
+proveedores -- "1" rel_abastece
+rel_abastece -- "N" compras
+
+usuarios -- "1" rel_realiza
+rel_realiza -- "N" compras
+
+compras -- "1" rel_incluye
+rel_incluye -- "N" productos
+
+promociones -- "1" rel_aplica
+rel_aplica -- "N" productos
+
+packs -- "1" rel_forma
+rel_forma -- "N" productos
+
+ventas -- "1" rel_genera
+rel_genera -- "0..1" cuentas
+
+cuentas -- "1" rel_paga
+rel_paga -- "N" pagos
+
+ventas -- "1" rel_devuelve
+rel_devuelve -- "N" devoluciones
+
+productos -- "1" rel_afecta
+rel_afecta -- "N" mermas
+
+clientes -- "1" rel_acumula
+rel_acumula -- "N" puntos
+
+devoluciones -- "1" rel_restaura
+rel_restaura -- "N" productos
+
+' ===== RELACIONES COMPLEMENTARIAS =====
+usuarios -- "1" caja
+usuarios -- "1" gastos
+usuarios -- "1" tokens
+
+usuarios -[hidden]-> clientes
+clientes -[hidden]-> categorias
+categorias -[hidden]-> productos
+productos -[hidden]-> ventas
+ventas -[hidden]-> proveedores
+proveedores -[hidden]-> compras
+compras -[hidden]-> promociones
+promociones -[hidden]-> packs
+
+@enduml

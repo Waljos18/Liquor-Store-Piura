@@ -68,6 +68,18 @@ public class ClienteController {
         return ResponseEntity.ok(res);
     }
 
+    @PatchMapping("/{id}/puntos")
+    @Operation(summary = "Ajustar puntos de fidelización del cliente")
+    public ResponseEntity<ApiResponse<ClienteDTO>> ajustarPuntos(
+            @PathVariable Long id,
+            @RequestParam int cantidad,
+            @RequestParam(defaultValue = "SUMAR") String tipo,
+            @RequestParam(required = false, defaultValue = "") String motivo) {
+        ApiResponse<ClienteDTO> res = clienteService.ajustarPuntos(id, cantidad, tipo, motivo);
+        if (!res.isSuccess()) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+        return ResponseEntity.ok(res);
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar cliente")
     public ResponseEntity<ApiResponse<Void>> eliminar(@PathVariable Long id) {

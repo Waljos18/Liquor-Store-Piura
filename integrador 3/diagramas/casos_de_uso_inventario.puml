@@ -1,0 +1,36 @@
+@startuml
+title Inventario - Casos de Uso
+
+left to right direction
+skinparam useCase {
+  BackgroundColor #FFF8E1
+  BorderColor #F9A825
+}
+
+rectangle "Inventario" #FFF8E1 {
+  usecase (Gestionar productos) as UC_Productos
+  usecase (Registrar entrada unidades) as UC_Entrada
+  usecase (Registrar entrada pack) as UC_EntradaPack
+  usecase (Consultar stock) as UC_Stock
+  usecase (Configurar stock min y max) as UC_Config
+  usecase (Alerta stock bajo) as UC_AlertaBajo
+  usecase (Alerta productos por vencer) as UC_AlertaVencer
+  usecase (Historial movimientos) as UC_Movimientos
+}
+
+actor "Administrador" as Admin
+actor "Vendedor" as Vend
+
+Admin --> UC_Productos
+Admin --> UC_Entrada
+Admin --> UC_EntradaPack
+Admin --> UC_Config
+Admin --> UC_Movimientos
+
+Vend --> UC_Stock
+Vend --> UC_AlertaBajo
+Vend --> UC_AlertaVencer
+
+UC_EntradaPack --> UC_Entrada
+
+@enduml

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../ui/Button';
 import {
   fetchProductos,
@@ -6,17 +6,10 @@ import {
   fetchProductosSinCategoria,
   eliminarProducto,
   eliminarProductoByCodigo,
-  eliminarCategoriaByNombre,
   type ProductoDTO,
   type CategoriaDTO,
 } from '../../api/api';
 import { useNavigate } from 'react-router-dom';
-
-const PRODUCTOS_A_ELIMINAR = [
-  { codigo: '234234', nombre: 'Pilsen' },
-  { codigo: '7891234567891', nombre: 'Ron Cartavio Black 750 ml' },
-];
-const CATEGORIA_A_ELIMINAR = 'Cervezas';
 
 export const ProductosSettings = () => {
   const navigate = useNavigate();
@@ -25,7 +18,6 @@ export const ProductosSettings = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoriaId, setCategoriaId] = useState<number | ''>('');
-  const [limpiando, setLimpiando] = useState(false);
   const [sinCategoria, setSinCategoria] = useState<ProductoDTO[]>([]);
   const [eliminandoId, setEliminandoId] = useState<number | null>(null);
 
@@ -54,17 +46,6 @@ export const ProductosSettings = () => {
       : await eliminarProducto(p.id);
     setEliminandoId(null);
     if (res.success) load();
-  };
-
-  const limpiarProductosYCategoriaPrueba = async () => {
-    if (!window.confirm(`¿Desactivar productos ${PRODUCTOS_A_ELIMINAR.map((x) => x.nombre).join(', ')} y eliminar la categoría "${CATEGORIA_A_ELIMINAR}"?`)) return;
-    setLimpiando(true);
-    for (const { codigo } of PRODUCTOS_A_ELIMINAR) {
-      await eliminarProductoByCodigo(codigo);
-    }
-    await eliminarCategoriaByNombre(CATEGORIA_A_ELIMINAR);
-    setLimpiando(false);
-    load();
   };
 
   return (
@@ -129,14 +110,6 @@ export const ProductosSettings = () => {
           ))}
         </select>
         <Button onClick={() => navigate('/products')}>Ir a Productos</Button>
-        <Button
-          variant="outline"
-          onClick={limpiarProductosYCategoriaPrueba}
-          disabled={limpiando}
-          title={`Desactivar productos: ${PRODUCTOS_A_ELIMINAR.map((x) => x.nombre).join(', ')} y eliminar categoría ${CATEGORIA_A_ELIMINAR}`}
-        >
-          {limpiando ? 'Ejecutando...' : 'Quitar Pilsen, Ron Cartavio y categoría Cervezas'}
-        </Button>
       </div>
 
       {loading ? (

@@ -2,6 +2,7 @@ package com.licoreria.controller;
 
 import com.licoreria.dto.ApiResponse;
 import com.licoreria.dto.ProductoDTO;
+import com.licoreria.dto.inventario.AlertasResumenDTO;
 import com.licoreria.dto.inventario.EntradaPackRequest;
 import com.licoreria.dto.inventario.MovimientoInventarioDTO;
 import com.licoreria.dto.inventario.StockEquivalenciaPacksDTO;
@@ -60,7 +61,7 @@ public class InventarioController {
 
     @PostMapping("/movimientos")
     @Operation(summary = "Crear movimiento manual", description = "Crea un movimiento manual de inventario (ENTRADA, SALIDA, AJUSTE)")
-    public ResponseEntity<ApiResponse<MovimientoInventario>> crearMovimientoManual(
+    public ResponseEntity<ApiResponse<MovimientoInventarioDTO>> crearMovimientoManual(
             @RequestParam Long productoId,
             @RequestParam String tipoMovimiento,
             @RequestParam Integer cantidad,
@@ -70,6 +71,12 @@ public class InventarioController {
                 productoId, tipoMovimiento, cantidad, motivo));
     }
 
+    @GetMapping("/alertas/resumen")
+    @Operation(summary = "Resumen de alertas críticas", description = "Devuelve stock bajo, próximos a vencer (7 días) y movimientos recientes (48h)")
+    public ResponseEntity<ApiResponse<AlertasResumenDTO>> obtenerAlertasResumen() {
+        return ResponseEntity.ok(inventarioService.obtenerAlertasResumen());
+    }
+
     @GetMapping("/alertas/stock-bajo")
     @Operation(summary = "Productos con stock bajo", description = "Lista productos cuyo stock está por debajo del mínimo")
     public ResponseEntity<ApiResponse<List<ProductoDTO>>> obtenerProductosStockBajo() {
@@ -77,9 +84,11 @@ public class InventarioController {
     }
 
     @GetMapping("/alertas/vencimiento")
-    @Operation(summary = "Productos próximos a vencer", description = "Lista productos que vencen en los próximos 30 días")
-    public ResponseEntity<ApiResponse<List<ProductoDTO>>> obtenerProductosProximosVencer() {
-        return ResponseEntity.ok(inventarioService.obtenerProductosProximosVencer());
+    @Operation(summary = "Productos próximos a vencer", description = "Lista productos que vencen en los próximos N días (por defecto 30)")
+    public ResponseEntity<ApiResponse<List<ProductoDTO>>> obtenerProductosProximosVencer(
+            @RequestParam(required = false, defaultValue = "30") int dias
+    ) {
+        return ResponseEntity.ok(inventarioService.obtenerProductosProximosVencer(dias));
     }
 
     @PostMapping("/ajustar")

@@ -3,6 +3,7 @@ package com.licoreria.controller;
 import com.licoreria.dto.ApiResponse;
 import com.licoreria.dto.compra.CompraDTO;
 import com.licoreria.dto.compra.CrearCompraRequest;
+import com.licoreria.dto.compra.RecibirCompraRequest;
 import com.licoreria.service.CompraService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,6 +47,15 @@ public class CompraController {
     @Operation(summary = "Obtener compra por ID", description = "Obtiene los detalles completos de una compra")
     public ResponseEntity<ApiResponse<CompraDTO>> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(compraService.obtenerPorId(id));
+    }
+
+    @PutMapping("/{id}/recibir")
+    @Operation(summary = "Recibir mercadería", description = "Recibe total o parcialmente la mercadería de una compra PENDIENTE y actualiza el stock.")
+    public ResponseEntity<ApiResponse<CompraDTO>> recibir(
+            @PathVariable Long id,
+            @RequestBody(required = false) RecibirCompraRequest request
+    ) {
+        return ResponseEntity.ok(compraService.recibir(id, request));
     }
 
     @PutMapping("/{id}/anular")

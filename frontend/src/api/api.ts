@@ -32,19 +32,27 @@ async function request<T>(
   const json = await parseJsonSafe<ApiResponse<T>>(res);
 
   if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
+    // Solo 401 indica sesión inválida/expirada; 403 = sin permiso (no cierra sesión)
+    if (res.status === 401) {
       window.dispatchEvent(new CustomEvent('auth:session-invalid'));
     }
+    // json?.error puede ser un objeto ApiResponse {code,message} o un string de Spring Boot
+    const rawJson = json as unknown as Record<string, unknown> | null;
+    const apiMsg = typeof rawJson?.error === 'object' && rawJson?.error !== null
+      ? (rawJson.error as { message?: string })?.message
+      : undefined;
+    // json?.message es el campo message del formato de error estándar de Spring Boot
+    const springMsg = typeof rawJson?.message === 'string' ? rawJson.message : undefined;
     const message =
       res.status === 403
-        ? 'Acceso denegado. Inicia sesión nuevamente.'
+        ? 'No tienes permiso para realizar esta acción.'
         : res.status === 401
           ? 'Sesión expirada. Inicia sesión nuevamente.'
-          : json?.error?.message ?? 'Error en la solicitud';
-    return {
-      success: false,
-      error: json?.error ?? { code: 'ERROR', message },
-    };
+          : apiMsg ?? springMsg ?? 'Error en la solicitud';
+    const errObj = typeof rawJson?.error === 'object' && rawJson?.error !== null
+      ? (rawJson.error as { code: string; message: string })
+      : { code: String(res.status), message };
+    return { success: false, error: errObj };
   }
 
   if (json) return json;
@@ -57,6 +65,23 @@ async function requestBlob(path: string): Promise<Blob> {
   const res = await fetch(url, { headers });
   if (!res.ok) throw new Error('Error al descargar');
   return res.blob();
+}
+
+// Auth - Recuperación de contraseña
+export async function solicitarResetPassword(email: string): Promise<ApiResponse<void>> {
+  return request('/api/v1/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+    headers: {},
+  });
+}
+
+export async function resetPassword(token: string, nuevaPassword: string): Promise<ApiResponse<void>> {
+  return request('/api/v1/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, nuevaPassword }),
+    headers: {},
+  });
 }
 
 // Dashboard
@@ -87,6 +112,8 @@ export interface ReporteVentas {
   ganancias?: number;
   ventasPorDia: VentaPorDia[];
   ventasPorFormaPago: { formaPago: string; total: number; cantidad: number }[];
+  ventasPorCategoria?: { categoria: string; total: number; cantidadVendida: number }[];
+  ventasPorVendedor?: { vendedor: string; rol: string; totalVentas: number; transacciones: number; ticketPromedio: number }[];
 }
 
 export async function fetchReporteVentas(
@@ -154,6 +181,7 @@ export interface ProductoDTO {
   fechaVencimiento?: string;
   imagen?: string;
   activo: boolean;
+  fechaActualizacion?: string;
 }
 
 export async function fetchProductosSinCategoria(): Promise<ApiResponse<ProductoDTO[]>> {
@@ -165,12 +193,14 @@ export async function fetchProductos(params?: {
   categoriaId?: number;
   page?: number;
   size?: number;
+  activo?: boolean;
 }): Promise<ApiResponse<{ content: ProductoDTO[]; totalElements: number }>> {
   const q = new URLSearchParams();
   if (params?.search) q.set('search', params.search);
   if (params?.categoriaId) q.set('categoriaId', String(params.categoriaId));
   if (params?.page != null) q.set('page', String(params.page));
   if (params?.size != null) q.set('size', String(params.size));
+  if (params?.activo != null) q.set('activo', String(params.activo));
   return request<{ content: ProductoDTO[]; totalElements: number }>(`/api/v1/productos?${q}`);
 }
 
@@ -189,6 +219,10 @@ export async function crearProducto(dto: Partial<ProductoDTO>): Promise<ApiRespo
 
 export async function actualizarProducto(id: number, dto: Partial<ProductoDTO>): Promise<ApiResponse<ProductoDTO>> {
   return request<ProductoDTO>(`/api/v1/productos/${id}`, { method: 'PUT', body: JSON.stringify(dto) });
+}
+
+export async function eliminarProductosBulk(ids: number[]): Promise<ApiResponse<void>> {
+  return request<void>('/api/v1/productos/bulk-delete', { method: 'POST', body: JSON.stringify(ids) });
 }
 
 export async function eliminarProducto(id: number): Promise<ApiResponse<void>> {
@@ -252,6 +286,10 @@ export interface CrearVentaRequest {
   /** Si true (default), se aplica IGV 18%. Si false, total = subtotal sin impuesto */
   aplicarIgv?: boolean;
   referencia?: string;
+  /** Solo para formaPago=CREDITO */
+  fechaVencimientoCredito?: string;
+  /** Puntos a canjear como descuento (requiere clienteId) */
+  puntosCanjeados?: number;
 }
 
 export interface VentaDTO {
@@ -262,6 +300,7 @@ export interface VentaDTO {
   vuelto?: number;
   formaPago: string;
   estado: string;
+  usuario?: { id: number; nombre: string; username: string; rol: string };
   cliente?: { id: number; nombre: string; numeroDocumento?: string };
   detalles?: { producto?: ProductoDTO; packNombre?: string; cantidad: number; precioUnitario: number; subtotal: number }[];
 }
@@ -361,8 +400,9 @@ export async function fetchStockBajo(): Promise<ApiResponse<ProductoDTO[]>> {
   return request<ProductoDTO[]>('/api/v1/inventario/alertas/stock-bajo');
 }
 
-export async function fetchProximosVencer(): Promise<ApiResponse<ProductoDTO[]>> {
-  return request<ProductoDTO[]>('/api/v1/inventario/alertas/vencimiento');
+export async function fetchProximosVencer(dias?: number): Promise<ApiResponse<ProductoDTO[]>> {
+  const q = dias != null && dias !== 30 ? `?dias=${dias}` : '';
+  return request<ProductoDTO[]>(`/api/v1/inventario/alertas/vencimiento${q}`);
 }
 
 export interface MovimientoInventarioDTO {
@@ -386,13 +426,32 @@ export async function fetchMovimientosInventario(params?: {
   const q = new URLSearchParams();
   if (params?.productoId) q.set('productoId', String(params.productoId));
   if (params?.tipoMovimiento) q.set('tipoMovimiento', params.tipoMovimiento);
-  if (params?.fechaDesde) q.set('fechaDesde', params.fechaDesde);
-  if (params?.fechaHasta) q.set('fechaHasta', params.fechaHasta);
+  // El backend usa @DateTimeFormat ISO_DATE_TIME: convertir "YYYY-MM-DD" → "YYYY-MM-DDTHH:mm:ssZ"
+  if (params?.fechaDesde) {
+    const iso = params.fechaDesde.length === 10 ? params.fechaDesde + 'T00:00:00Z' : params.fechaDesde;
+    q.set('fechaDesde', iso);
+  }
+  if (params?.fechaHasta) {
+    const iso = params.fechaHasta.length === 10 ? params.fechaHasta + 'T23:59:59Z' : params.fechaHasta;
+    q.set('fechaHasta', iso);
+  }
   if (params?.page != null) q.set('page', String(params.page));
   if (params?.size != null) q.set('size', String(params.size));
   return request<{ content: MovimientoInventarioDTO[]; totalElements: number }>(
     `/api/v1/inventario/movimientos?${q}`
   );
+}
+
+// Alertas resumen (campanita)
+export interface AlertasResumenDTO {
+  stockBajo: ProductoDTO[];
+  proximosVencer: ProductoDTO[];
+  movimientosRecientes: MovimientoInventarioDTO[];
+  totalAlertas: number;
+}
+
+export async function fetchAlertasResumen(): Promise<ApiResponse<AlertasResumenDTO>> {
+  return request<AlertasResumenDTO>('/api/v1/inventario/alertas/resumen');
 }
 
 export async function crearMovimientoManual(
@@ -499,11 +558,19 @@ export interface ClienteDTO {
   nombre: string;
   telefono?: string;
   email?: string;
+  puntosFidelizacion?: number;
 }
 
-export async function fetchClientes(search?: string): Promise<ApiResponse<{ content: ClienteDTO[]; totalElements: number }>> {
-  const q = search ? `?search=${encodeURIComponent(search)}&size=50` : '?size=50';
-  return request<{ content: ClienteDTO[]; totalElements: number }>(`/api/v1/clientes${q}`);
+export async function fetchClientes(
+  params?: { search?: string; page?: number; size?: number }
+): Promise<ApiResponse<{ content: ClienteDTO[]; totalElements: number; totalPages: number }>> {
+  const q = new URLSearchParams();
+  if (params?.search) q.set('search', params.search);
+  if (params?.page != null) q.set('page', String(params.page));
+  q.set('size', String(params?.size ?? 20));
+  return request<{ content: ClienteDTO[]; totalElements: number; totalPages: number }>(
+    `/api/v1/clientes${q.toString() ? '?' + q : ''}`
+  );
 }
 
 export async function crearCliente(dto: Partial<ClienteDTO>): Promise<ApiResponse<ClienteDTO>> {
@@ -516,6 +583,16 @@ export async function actualizarCliente(id: number, dto: Partial<ClienteDTO>): P
 
 export async function eliminarCliente(id: number): Promise<ApiResponse<void>> {
   return request<void>(`/api/v1/clientes/${id}`, { method: 'DELETE' });
+}
+
+export async function ajustarPuntosCliente(
+  id: number,
+  cantidad: number,
+  tipo: 'SUMAR' | 'RESTAR',
+  motivo?: string
+): Promise<ApiResponse<ClienteDTO>> {
+  const q = new URLSearchParams({ cantidad: String(cantidad), tipo, motivo: motivo ?? '' });
+  return request<ClienteDTO>(`/api/v1/clientes/${id}/puntos?${q}`, { method: 'PATCH' });
 }
 
 // Proveedores
@@ -628,6 +705,10 @@ export async function desactivarPromocion(id: number): Promise<ApiResponse<void>
   return request<void>(`/api/v1/promociones/${id}`, { method: 'DELETE' });
 }
 
+export async function eliminarPromocion(id: number): Promise<ApiResponse<void>> {
+  return request<void>(`/api/v1/promociones/${id}/eliminar`, { method: 'DELETE' });
+}
+
 // Packs (combos de productos)
 export interface PackProductoDTO {
   id?: number;
@@ -680,6 +761,440 @@ export async function desactivarPack(id: number): Promise<ApiResponse<void>> {
   return request<void>(`/api/v1/packs/${id}`, { method: 'DELETE' });
 }
 
+export async function eliminarPack(id: number): Promise<ApiResponse<void>> {
+  return request<void>(`/api/v1/packs/${id}/eliminar`, { method: 'DELETE' });
+}
+
 export async function calcularPrecioSugeridoPack(id: number): Promise<ApiResponse<number>> {
   return request<number>(`/api/v1/packs/${id}/calcular-precio`);
+}
+
+// Compras
+export interface CompraDTO {
+  id: number;
+  numeroCompra: string;
+  proveedor: { id: number; razonSocial: string; ruc?: string };
+  fechaCompra: string;
+  total: number;
+  usuario: { id: number; nombre: string; username: string; rol: string };
+  estado: string;
+  observaciones?: string;
+  fechaCreacion: string;
+  fechaRecepcion?: string;
+  detalles?: { id: number; producto: { id: number; nombre: string; codigoBarras?: string }; cantidad: number; cantidadRecibida: number; precioUnitario: number; subtotal: number }[];
+}
+
+export interface CrearCompraRequest {
+  proveedorId: number;
+  fechaCompra?: string;
+  items: { productoId: number; cantidad: number; precioUnitario: number }[];
+  observaciones?: string;
+}
+
+export interface RecibirCompraRequest {
+  items?: { productoId: number; cantidadRecibida: number }[];
+  observaciones?: string;
+}
+
+export async function fetchCompras(params?: {
+  proveedorId?: number;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  estado?: string;
+  page?: number;
+  size?: number;
+}): Promise<ApiResponse<{ content: CompraDTO[]; totalElements: number }>> {
+  const q = new URLSearchParams();
+  if (params?.proveedorId) q.set('proveedorId', String(params.proveedorId));
+  if (params?.fechaDesde) q.set('fechaDesde', params.fechaDesde);
+  if (params?.fechaHasta) q.set('fechaHasta', params.fechaHasta);
+  if (params?.estado) q.set('estado', params.estado);
+  if (params?.page != null) q.set('page', String(params.page));
+  if (params?.size != null) q.set('size', String(params.size));
+  return request<{ content: CompraDTO[]; totalElements: number }>(`/api/v1/compras?${q}`);
+}
+
+export async function fetchCompraPorId(id: number): Promise<ApiResponse<CompraDTO>> {
+  return request<CompraDTO>(`/api/v1/compras/${id}`);
+}
+
+export async function crearCompraCompleta(body: CrearCompraRequest): Promise<ApiResponse<CompraDTO>> {
+  return request<CompraDTO>('/api/v1/compras', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function recibirCompra(id: number, body?: RecibirCompraRequest): Promise<ApiResponse<CompraDTO>> {
+  return request<CompraDTO>(`/api/v1/compras/${id}/recibir`, { method: 'PUT', body: JSON.stringify(body ?? {}) });
+}
+
+export async function anularCompra(id: number): Promise<ApiResponse<CompraDTO>> {
+  return request<CompraDTO>(`/api/v1/compras/${id}/anular`, { method: 'PUT' });
+}
+
+// Devoluciones
+export interface DevolucionDTO {
+  id: number;
+  numeroDevolucion: string;
+  ventaId?: number;
+  numeroVenta?: string;
+  fecha: string;
+  usuario: { id: number; nombre: string; rol: string };
+  motivo: string;
+  estado: string;
+  observaciones?: string;
+  total: number;
+  fechaCreacion: string;
+  detalles?: { id: number; productoId: number; productoNombre: string; cantidad: number; precioUnitario: number; subtotal: number }[];
+}
+
+export interface CrearDevolucionRequest {
+  ventaId?: number;
+  motivo: string;
+  observaciones?: string;
+  items: { productoId: number; cantidad: number; precioUnitario: number }[];
+}
+
+export async function fetchDevoluciones(params?: { desde?: string; hasta?: string; page?: number; size?: number }): Promise<ApiResponse<{ content: DevolucionDTO[]; totalElements: number }>> {
+  const q = new URLSearchParams();
+  // El backend espera Instant en formato ISO-8601 con hora y zona
+  if (params?.desde) q.set('desde', `${params.desde}T00:00:00Z`);
+  if (params?.hasta) q.set('hasta', `${params.hasta}T23:59:59Z`);
+  if (params?.page != null) q.set('page', String(params.page));
+  if (params?.size != null) q.set('size', String(params.size));
+  return request<{ content: DevolucionDTO[]; totalElements: number }>(`/api/v1/devoluciones?${q}`);
+}
+
+export async function crearDevolucion(body: CrearDevolucionRequest): Promise<ApiResponse<DevolucionDTO>> {
+  return request<DevolucionDTO>('/api/v1/devoluciones', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function fetchDevolucionesPorVenta(ventaId: number): Promise<ApiResponse<DevolucionDTO[]>> {
+  return request<DevolucionDTO[]>(`/api/v1/devoluciones/por-venta/${ventaId}`);
+}
+
+// Cuentas por cobrar (crédito / fiado)
+export interface CuentaPorCobrarDTO {
+  id: number;
+  ventaId?: number;
+  numeroVenta?: string;
+  clienteId: number;
+  clienteNombre: string;
+  clienteDocumento: string;
+  montoTotal: number;
+  montoPagado: number;
+  saldoPendiente: number;
+  estado: string;
+  fechaVencimiento?: string;
+  observaciones?: string;
+  fechaCreacion: string;
+  pagos?: { id: number; monto: number; fecha: string; usuarioNombre: string; formaPago: string; observaciones?: string }[];
+}
+
+export async function fetchCuentasPorCobrar(params?: { estado?: string; clienteId?: number; page?: number; size?: number }): Promise<ApiResponse<{ content: CuentaPorCobrarDTO[]; totalElements: number }>> {
+  const q = new URLSearchParams();
+  if (params?.estado) q.set('estado', params.estado);
+  if (params?.clienteId) q.set('clienteId', String(params.clienteId));
+  if (params?.page != null) q.set('page', String(params.page));
+  if (params?.size != null) q.set('size', String(params.size));
+  return request<{ content: CuentaPorCobrarDTO[]; totalElements: number }>(`/api/v1/cuentas-cobrar?${q}`);
+}
+
+export async function fetchCuentaPorCobrarPorId(id: number): Promise<ApiResponse<CuentaPorCobrarDTO>> {
+  return request<CuentaPorCobrarDTO>(`/api/v1/cuentas-cobrar/${id}`);
+}
+
+export async function pagarCuenta(id: number, body: { monto: number; formaPago: string; observaciones?: string }): Promise<ApiResponse<CuentaPorCobrarDTO>> {
+  return request<CuentaPorCobrarDTO>(`/api/v1/cuentas-cobrar/${id}/pagar`, { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function fetchSaldoCliente(clienteId: number): Promise<ApiResponse<number>> {
+  return request<number>(`/api/v1/cuentas-cobrar/cliente/${clienteId}/saldo`);
+}
+
+// Apertura de caja
+export interface AperturaCajaDTO {
+  id: number;
+  fecha: string;
+  horaApertura: string;
+  horaCierre?: string;
+  montoInicial: number;
+  montoCierre?: number;
+  montoReal?: number;
+  sobranteFaltante?: number;
+  usuarioAperturaNombre: string;
+  usuarioCierreNombre?: string;
+  estado: string;
+  observaciones?: string;
+  observacionesCierre?: string;
+}
+
+export async function abrirCaja(body: { montoInicial: number; observaciones?: string }): Promise<ApiResponse<AperturaCajaDTO>> {
+  return request<AperturaCajaDTO>('/api/v1/caja/apertura', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function cerrarCaja(id: number, body: { montoReal: number; observacionesCierre?: string }): Promise<ApiResponse<AperturaCajaDTO>> {
+  return request<AperturaCajaDTO>(`/api/v1/caja/apertura/${id}/cerrar`, { method: 'PUT', body: JSON.stringify(body) });
+}
+
+export async function fetchCajaActiva(): Promise<ApiResponse<AperturaCajaDTO | null>> {
+  return request<AperturaCajaDTO | null>('/api/v1/caja/apertura/activa');
+}
+
+// Cierre de caja
+export interface CierreCajaDTO {
+  fecha: string;
+  totalVentas: number;
+  totalGanancias: number;
+  totalTransacciones: number;
+  ventasAnuladas: number;
+  desglosePorFormaPago: { formaPago: string; total: number; cantidad: number }[];
+  ventasPorVendedor?: { vendedor: string; rol: string; totalVentas: number; transacciones: number }[];
+}
+
+export async function fetchCierreCaja(fecha?: string): Promise<ApiResponse<CierreCajaDTO>> {
+  const q = fecha ? `?fecha=${fecha}` : '';
+  return request<CierreCajaDTO>(`/api/v1/ventas/cierre-caja${q}`);
+}
+
+// IA / Asistente
+const AI_BASE = import.meta.env.VITE_AI_URL || 'http://localhost:8001';
+
+export interface ChatMsg {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export async function iaChat(
+  messages: ChatMsg[],
+  context?: Record<string, unknown>
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  const jwt_token = localStorage.getItem('access_token') ?? undefined;
+  try {
+    const res = await fetch(`${AI_BASE}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, context, jwt_token }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.detail ?? 'Error en el servicio de IA' };
+    return data as { success: boolean; message?: string };
+  } catch {
+    return { success: false, error: 'No se puede conectar con el servicio de IA. Asegúrate de que esté ejecutándose en el puerto 8001.' };
+  }
+}
+
+export interface UpsellSugerencia {
+  nombre: string;
+  razon: string;
+  precioVenta: number;
+}
+
+export async function iaUpsell(
+  cartItems: { nombre: string; cantidad: number; precioUnitario: number }[]
+): Promise<{ success: boolean; sugerencias?: UpsellSugerencia[]; error?: string }> {
+  const jwt_token = localStorage.getItem('access_token') ?? undefined;
+  try {
+    const res = await fetch(`${AI_BASE}/api/upsell`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cart_items: cartItems, jwt_token }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.detail ?? 'Error en el servicio de IA' };
+    return data as { success: boolean; sugerencias?: UpsellSugerencia[] };
+  } catch {
+    return { success: false, error: 'No se puede conectar con el servicio de IA.' };
+  }
+}
+
+export async function iaInsights(
+  tipo: 'ventas' | 'inventario' | 'general',
+  datos: Record<string, unknown>
+): Promise<{ success: boolean; insight?: string; error?: string }> {
+  try {
+    const res = await fetch(`${AI_BASE}/api/insights`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo, datos }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.detail ?? 'Error en el servicio de IA' };
+    return data as { success: boolean; insight?: string };
+  } catch {
+    return { success: false, error: 'No se puede conectar con el servicio de IA.' };
+  }
+}
+
+export interface PackSugerido {
+  nombre: string;
+  descripcion: string;
+  productos: { nombre: string; cantidad: number; precio_unitario: number }[];
+  precio_individual_total: number;
+  precio_pack_sugerido: number;
+  descuento_porcentaje: number;
+  margen_estimado: string;
+}
+
+export interface ProductoAComprar {
+  nombre: string;
+  motivo: string;
+  cantidad_minima_sugerida: number;
+}
+
+export interface PacksRecomendacion {
+  packs_sugeridos: PackSugerido[];
+  productos_a_comprar: ProductoAComprar[];
+}
+
+// ── Fidelización ──────────────────────────────────────────────────────────────
+
+export interface ConfigFidelizacionDTO {
+  id: number;
+  solesPorPunto: number;
+  puntosPorSolDescuento: number;
+  maxPuntosCanjeporVenta: number;
+  minCompraParaCanje: number;
+  activo: boolean;
+}
+
+export interface PuntosMovimientoDTO {
+  id: number;
+  tipo: 'ACUMULACION' | 'CANJE' | 'AJUSTE_MANUAL';
+  cantidad: number;
+  saldoDespues: number;
+  motivo?: string;
+  ventaNumero?: string;
+  fecha: string;
+}
+
+export async function fetchFidelizacionConfig(): Promise<ApiResponse<ConfigFidelizacionDTO>> {
+  return request<ConfigFidelizacionDTO>('/api/v1/fidelizacion/config');
+}
+
+export async function updateFidelizacionConfig(
+  data: Partial<ConfigFidelizacionDTO>
+): Promise<ApiResponse<ConfigFidelizacionDTO>> {
+  return request<ConfigFidelizacionDTO>('/api/v1/fidelizacion/config', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchHistorialPuntos(
+  clienteId: number,
+  page = 0,
+  size = 20
+): Promise<ApiResponse<{ content: PuntosMovimientoDTO[]; totalElements: number }>> {
+  return request<{ content: PuntosMovimientoDTO[]; totalElements: number }>(
+    `/api/v1/fidelizacion/historial/${clienteId}?page=${page}&size=${size}`
+  );
+}
+
+export async function ajusteManualPuntos(data: {
+  clienteId: number;
+  cantidad: number;
+  motivo?: string;
+}): Promise<ApiResponse<void>> {
+  return request<void>('/api/v1/fidelizacion/ajuste', { method: 'POST', body: JSON.stringify(data) });
+}
+
+// ── Gastos Operativos ──────────────────────────────────────────────────────────
+
+export interface GastoDTO {
+  id: number;
+  descripcion: string;
+  categoria: string;
+  monto: number;
+  fecha: string;
+  comprobante?: string;
+  observaciones?: string;
+  usuario: string;
+  fechaCreacion?: string;
+}
+
+export interface CrearGastoRequest {
+  descripcion: string;
+  categoria: string;
+  monto: number;
+  fecha: string;
+  comprobante?: string;
+  observaciones?: string;
+}
+
+export async function fetchGastos(params?: {
+  desde?: string;
+  hasta?: string;
+  page?: number;
+  size?: number;
+}): Promise<ApiResponse<{ content: GastoDTO[]; totalElements: number }>> {
+  const q = new URLSearchParams();
+  if (params?.desde) q.set('desde', params.desde);
+  if (params?.hasta) q.set('hasta', params.hasta);
+  if (params?.page != null) q.set('page', String(params.page));
+  if (params?.size != null) q.set('size', String(params.size));
+  return request<{ content: GastoDTO[]; totalElements: number }>(`/api/v1/gastos?${q}`);
+}
+
+export async function crearGasto(body: CrearGastoRequest): Promise<ApiResponse<GastoDTO>> {
+  return request<GastoDTO>('/api/v1/gastos', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function eliminarGasto(id: number): Promise<ApiResponse<void>> {
+  return request<void>(`/api/v1/gastos/${id}`, { method: 'DELETE' });
+}
+
+// ── Mermas ─────────────────────────────────────────────────────────────────────
+
+export interface MermaDTO {
+  id: number;
+  productoId: number;
+  productoNombre: string;
+  cantidad: number;
+  motivo: string;
+  descripcion?: string;
+  valorPerdida: number;
+  fecha: string;
+  usuario: string;
+}
+
+export interface RegistrarMermaRequest {
+  productoId: number;
+  cantidad: number;
+  motivo: string;
+  descripcion?: string;
+}
+
+export async function fetchMermas(params?: {
+  desde?: string;
+  hasta?: string;
+  page?: number;
+  size?: number;
+}): Promise<ApiResponse<{ content: MermaDTO[]; totalElements: number }>> {
+  const q = new URLSearchParams();
+  if (params?.desde) q.set('desde', params.desde);
+  if (params?.hasta) q.set('hasta', params.hasta);
+  if (params?.page != null) q.set('page', String(params.page));
+  if (params?.size != null) q.set('size', String(params.size));
+  return request<{ content: MermaDTO[]; totalElements: number }>(`/api/v1/mermas?${q}`);
+}
+
+export async function registrarMerma(body: RegistrarMermaRequest): Promise<ApiResponse<MermaDTO>> {
+  return request<MermaDTO>('/api/v1/mermas', { method: 'POST', body: JSON.stringify(body) });
+}
+
+export async function iaPacks(
+  productos: { nombre: string; categoria?: string; precioVenta: number; precioCompra?: number; stockActual: number }[],
+  packsExistentes: { nombre: string; productos: string[]; precioPack: number }[]
+): Promise<{ success: boolean; recomendaciones?: PacksRecomendacion; error?: string }> {
+  try {
+    const res = await fetch(`${AI_BASE}/api/packs-recomendacion`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productos, packs_existentes: packsExistentes }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.detail ?? 'Error en el servicio de IA' };
+    return data as { success: boolean; recomendaciones?: PacksRecomendacion };
+  } catch {
+    return { success: false, error: 'No se puede conectar con el servicio de IA.' };
+  }
 }

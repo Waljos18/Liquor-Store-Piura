@@ -1,0 +1,66 @@
+@startuml MAPA_PROCESOS_VISTA_GENERAL
+!theme plain
+title Mapa de Procesos – Vista General\nSistema Gestión Integral de Licorería (Chilalo Shot)
+
+top to bottom direction
+skinparam packageStyle rectangle
+skinparam defaultFontSize 12
+skinparam FontColor #333333
+skinparam package {
+  FontColor #1a1a1a
+  FontSize 12
+  BackgroundColor<<soporte>> #E8F4FD
+  BackgroundColor<<estrategicos>> #E8F8E8
+  BackgroundColor<<operativos>> #FFF4E6
+  BackgroundColor<<gestion>> #FEF9E7
+}
+skinparam activity {
+  FontColor #1a1a1a
+  FontSize 11
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+}
+
+package "Procesos de soporte" <<soporte>> {
+  [P0. Autenticación\ny autorización] as P0
+}
+
+package "Procesos estratégicos / Dirección" <<estrategicos>> {
+  [P1. Configurar sistema\ny negocio] as P1
+  [P2. Gestionar usuarios\ny roles] as P2
+}
+
+package "Procesos operativos (Core)" <<operativos>> {
+  [P3. Realizar venta\nen POS] as P3
+  [P4. Gestionar\ninventario] as P4
+  [P5. Emitir comprobantes\nelectrónicos] as P5
+  [P6. Gestionar compras\na proveedores] as P6
+}
+
+package "Gestión comercial y análisis" <<gestion>> {
+  [P7. Gestionar promociones\ny packs] as P7
+  [P8. Gestionar clientes\ny fidelización] as P8
+  [P9. Consultar reportes\ny analytics] as P9
+  [P10. Obtener recomendaciones\ny predicciones IA] as P10
+}
+
+' Relaciones desde soporte
+P0 --> P1
+P0 --> P3
+
+' Estratégicos
+P1 --> P2
+P2 --> P3
+
+' Operativos core
+P3 --> P4
+P3 --> P5
+P4 --> P6
+P4 --> P10
+
+' Gestión comercial hacia operativos / análisis
+P7 --> P3
+P8 --> P3
+P9 --> P10
+
+@enduml

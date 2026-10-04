@@ -1,0 +1,36 @@
+@startuml
+title Punto de Venta (POS) - Casos de Uso
+
+left to right direction
+skinparam useCase {
+  BackgroundColor #E8F5E9
+  BorderColor #2E7D32
+}
+
+rectangle "Punto de Venta (POS)" #E8F5E9 {
+  usecase (Registrar venta) as UC_Venta
+  usecase (Buscar producto) as UC_Buscar
+  usecase (Agregar producto o pack) as UC_Agregar
+  usecase (Aplicar forma de pago) as UC_Pago
+  usecase (Imprimir ticket) as UC_Ticket
+  usecase (Emitir comprobante electronico) as UC_Comprobante
+  usecase (Operar modo offline) as UC_Offline
+  usecase (Sincronizar al reconectar) as UC_Sync
+}
+
+actor "Vendedor" as Vend
+actor "Administrador" as Admin
+
+Vend --> UC_Venta
+Vend --> UC_Buscar
+Vend --> UC_Offline
+Admin --> UC_Venta
+
+UC_Venta --> UC_Buscar
+UC_Venta --> UC_Agregar
+UC_Venta --> UC_Pago
+UC_Ticket --> UC_Venta
+UC_Comprobante --> UC_Venta
+UC_Sync --> UC_Offline
+
+@enduml

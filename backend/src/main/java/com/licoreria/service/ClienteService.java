@@ -80,6 +80,24 @@ public class ClienteService {
     }
 
     @Transactional
+    public ApiResponse<ClienteDTO> ajustarPuntos(Long id, int cantidad, String tipo, String motivo) {
+        Cliente c = clienteRepository.findById(id).orElse(null);
+        if (c == null) {
+            return ApiResponse.error("NOT_FOUND", "Cliente no encontrado");
+        }
+        int actuales = c.getPuntosFidelizacion() != null ? c.getPuntosFidelizacion() : 0;
+        int nuevos;
+        if ("RESTAR".equalsIgnoreCase(tipo)) {
+            nuevos = Math.max(0, actuales - cantidad);
+        } else {
+            nuevos = actuales + cantidad;
+        }
+        c.setPuntosFidelizacion(nuevos);
+        c = clienteRepository.save(c);
+        return ApiResponse.ok(toDto(c), "Puntos ajustados correctamente");
+    }
+
+    @Transactional
     public ApiResponse<Void> eliminar(Long id) {
         if (!clienteRepository.existsById(id)) {
             return ApiResponse.error("NOT_FOUND", "Cliente no encontrado");

@@ -1,0 +1,46 @@
+@startuml ARQUITECTURA_TRES_CAPAS_CAPITULO_IV
+!theme plain
+title Arquitectura de tres capas — Sistema Licorería Chilalo Shot\n(Vista lógica: presentación, lógica de negocio, persistencia)
+
+top to bottom direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam roundcorner 10
+skinparam defaultFontName Arial
+skinparam ArrowThickness 1.2
+skinparam package {
+  BorderColor #2F5597
+  FontStyle bold
+}
+skinparam rectangle {
+  BorderColor #666666
+}
+skinparam database {
+  BorderColor #5D4037
+  BackgroundColor #FFF3E0
+}
+
+package "CLIENTES (Presentación)" #E8F5E9 {
+  rectangle "Frontend React Web\n**Puerto 5173** (dev)" as WEB
+  rectangle "App Android (Kotlin)\n**Jetpack Compose** + **Hilt**" as AND
+}
+
+package "BACKEND (Lógica)" #FFF8E1 {
+  rectangle "Spring Boot **3.2.5** — Puerto **8080**\n----\n**Controller** → **Service** → **Repository** → **Entity**\n----\nJWT Auth · Spring Security · Flyway · Swagger" as API
+}
+
+package "DATOS (Persistencia)" #E3F2FD {
+  database "PostgreSQL **15**\nBase de datos **licoreria_db**\n18 migraciones Flyway (**V1** → **V18**)" as DB
+}
+
+WEB -down-> API : HTTP/REST + JWT
+AND -down-> API : HTTP/REST + JWT
+API -down-> DB : JDBC\n(JPA / Hibernate)
+
+note bottom of API
+  La API expone recursos REST; los clientes
+  autentican con JWT. El esquema de BD se
+  versiona con Flyway al iniciar el backend.
+end note
+
+@enduml

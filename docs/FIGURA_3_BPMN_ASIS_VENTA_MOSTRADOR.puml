@@ -1,0 +1,46 @@
+@startuml FIGURA_3_BPMN_ASIS_VENTA
+!theme plain
+title Figura 3. Diagrama BPMN As-Is Del Proceso De Venta En Mostrador\nLicorería Chilalo Shot
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ActivityFontSize 10
+skinparam ActivityBorderColor #37474F
+skinparam ActivityBackgroundColor #FAFAFA
+
+top to bottom direction
+
+|#E3F2FD|Vendedor|
+start
+:1. Inicio (cliente en mostrador);
+
+|#E3F2FD|Vendedor|
+:2. Atención y verificación\n(pedido, precio, stock manual / visual);
+
+|#E3F2FD|Vendedor|
+if (3. ¿Stock OK?) then (sí)
+
+|#FFF8E1|Caja|
+:4. Registrar venta\n(libro, Excel o POS suelto);
+
+|#FFF8E1|Caja|
+:5. Cobro;
+
+|#E3F2FD|Vendedor|
+:6. Entrega + comprobante;
+
+|#E3F2FD|Vendedor|
+stop
+
+else (no)
+|#E3F2FD|Vendedor|
+:Sin venta\n(ajuste o retiro);
+stop
+endif
+
+legend right
+  Carriles: Vendedor | Caja. As-Is resumido.
+  BPMN 2.0 gráfico: Camunda / Bizagi.
+endlegend
+
+@enduml
