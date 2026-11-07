@@ -16,6 +16,7 @@ import {
   type ComprobanteDTO,
 } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { FACTURAS_HABILITADAS } from '../config/facturacion';
 import {
   FileText, Send, Download, Receipt, ListChecks, X,
   TrendingUp, ShoppingBag, CreditCard, ChevronLeft, ChevronRight,
@@ -32,6 +33,7 @@ const formatSoles = (n: number) => `S/ ${(n ?? 0).toFixed(2)}`;
 
 const ESTADO_SUNAT_CLASS: Record<string, string> = {
   PENDIENTE: 'bg-amber-100 text-amber-800',
+  SIMULADO: 'bg-slate-200 text-slate-700',
   ACEPTADO: 'bg-green-100 text-green-800',
   RECHAZADO: 'bg-red-100 text-red-800',
   ERROR: 'bg-red-100 text-red-800',
@@ -464,7 +466,10 @@ export const Ventas = () => {
                               comp ? (
                                 <div className="flex flex-wrap items-center gap-1">
                                   <span className="text-xs font-medium">{comp.serie}-{comp.numero}</span>
-                                  <span className={`px-1.5 py-0.5 rounded text-xs ${ESTADO_SUNAT_CLASS[comp.estadoSunat] ?? 'bg-gray-100'}`}>
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded text-xs ${ESTADO_SUNAT_CLASS[comp.estadoSunat] ?? 'bg-gray-100'}`}
+                                    title={comp.estadoSunat === 'SIMULADO' ? 'Envío de prueba: este comprobante NO fue enviado a SUNAT' : undefined}
+                                  >
                                     {comp.estadoSunat}
                                   </span>
                                   <button onClick={() => descargarPdfComprobante(comp.id)} className="text-text-secondary hover:text-primary p-0.5" title="Descargar PDF">
@@ -481,9 +486,11 @@ export const Ventas = () => {
                                   <Button variant="outline" size="sm" onClick={() => openBoleta(v)} className="text-xs px-2 py-1">
                                     <Receipt size={11} className="mr-1" /> Boleta
                                   </Button>
-                                  <Button variant="outline" size="sm" onClick={() => openFactura(v)} className="text-xs px-2 py-1">
-                                    <FileText size={11} className="mr-1" /> Factura
-                                  </Button>
+                                  {FACTURAS_HABILITADAS && (
+                                    <Button variant="outline" size="sm" onClick={() => openFactura(v)} className="text-xs px-2 py-1">
+                                      <FileText size={11} className="mr-1" /> Factura
+                                    </Button>
+                                  )}
                                 </div>
                               )
                             )}

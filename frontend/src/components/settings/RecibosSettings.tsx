@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Building, Phone, Mail, MapPin, FileText, Hash } from 'lucide-react';
+import { FACTURAS_HABILITADAS } from '../../config/facturacion';
 
 const LS_KEY = 'licoreria_empresa_config';
 
@@ -51,7 +52,7 @@ export const RecibosSettings = () => {
       setError('La serie de boleta debe tener formato B + 3 dígitos (ej. B001)');
       return;
     }
-    if (form.serieFactura && !/^F\d{3}$/.test(form.serieFactura)) {
+    if (FACTURAS_HABILITADAS && form.serieFactura && !/^F\d{3}$/.test(form.serieFactura)) {
       setError('La serie de factura debe tener formato F + 3 dígitos (ej. F001)');
       return;
     }
@@ -150,18 +151,20 @@ export const RecibosSettings = () => {
             </div>
             <Hash size={16} className="text-text-secondary mb-2.5 shrink-0" />
           </div>
-          <div className="flex items-end gap-1">
-            <div className="flex-1">
-              <Input
-                label="Serie de factura"
-                value={form.serieFactura}
-                onChange={(e) => setForm((f) => ({ ...f, serieFactura: e.target.value.toUpperCase() }))}
-                placeholder="F001"
-                maxLength={4}
-              />
+          {FACTURAS_HABILITADAS && (
+            <div className="flex items-end gap-1">
+              <div className="flex-1">
+                <Input
+                  label="Serie de factura"
+                  value={form.serieFactura}
+                  onChange={(e) => setForm((f) => ({ ...f, serieFactura: e.target.value.toUpperCase() }))}
+                  placeholder="F001"
+                  maxLength={4}
+                />
+              </div>
+              <Hash size={16} className="text-text-secondary mb-2.5 shrink-0" />
             </div>
-            <Hash size={16} className="text-text-secondary mb-2.5 shrink-0" />
-          </div>
+          )}
         </div>
         <p className="text-xs text-text-secondary">
           La numeración correlativa se incrementa automáticamente con cada comprobante emitido.

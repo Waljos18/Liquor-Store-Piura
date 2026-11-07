@@ -28,6 +28,7 @@ import {
   type ConfigFidelizacionDTO,
   type UpsellSugerencia,
 } from '../api/api';
+import { FACTURAS_HABILITADAS } from '../config/facturacion';
 
 type FormaPago = 'EFECTIVO' | 'TARJETA' | 'YAPE' | 'PLIN' | 'MIXTO' | 'CREDITO';
 
@@ -1129,7 +1130,7 @@ export const POS = () => {
                   )}
 
                   <p className="text-xs font-medium text-text-secondary text-center">Emitir comprobante</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={`grid gap-2 ${FACTURAS_HABILITADAS ? 'grid-cols-2' : 'grid-cols-1'}`}>
                     <Button
                       variant="outline"
                       size="sm"
@@ -1138,14 +1139,16 @@ export const POS = () => {
                     >
                       <Receipt size={14} className="mr-1" /> Boleta
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => { setShowFacturaModal(true); setComprobanteError(null); }}
-                      disabled={!!comprobanteOk}
-                    >
-                      <FileText size={14} className="mr-1" /> Factura
-                    </Button>
+                    {FACTURAS_HABILITADAS && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setShowFacturaModal(true); setComprobanteError(null); }}
+                        disabled={!!comprobanteOk}
+                      >
+                        <FileText size={14} className="mr-1" /> Factura
+                      </Button>
+                    )}
                   </div>
 
                   <Button onClick={nuevaVenta} className="w-full">

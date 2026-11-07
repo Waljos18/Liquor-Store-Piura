@@ -438,14 +438,16 @@ private fun VentaDetalleSheet(
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("Boleta", fontSize = 13.sp)
                             }
-                            OutlinedButton(
-                                onClick = onShowEmitirFactura,
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Factura", fontSize = 13.sp)
+                            if (com.licoreria.chilalo.ui.FACTURAS_HABILITADAS) {
+                                OutlinedButton(
+                                    onClick = onShowEmitirFactura,
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(Icons.Default.Description, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Factura", fontSize = 13.sp)
+                                }
                             }
                         }
                     }
@@ -481,7 +483,8 @@ private fun ComprobanteExistenteCard(comp: ComprobanteDto) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    "Estado SUNAT: ${comp.estadoSunat}",
+                    if (comp.estadoSunat == "SIMULADO") "Estado SUNAT: SIMULADO (no enviado a SUNAT)"
+                    else "Estado SUNAT: ${comp.estadoSunat}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

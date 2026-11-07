@@ -1494,7 +1494,9 @@ private fun VentaExitosaDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = onEmitirBoleta, modifier = Modifier.weight(1f), shape = RoundedCornerShape(8.dp)) { Text("Boleta", fontSize = 13.sp) }
-                        OutlinedButton(onClick = onEmitirFactura, modifier = Modifier.weight(1f), shape = RoundedCornerShape(8.dp)) { Text("Factura", fontSize = 13.sp) }
+                        if (com.licoreria.chilalo.ui.FACTURAS_HABILITADAS) {
+                            OutlinedButton(onClick = onEmitirFactura, modifier = Modifier.weight(1f), shape = RoundedCornerShape(8.dp)) { Text("Factura", fontSize = 13.sp) }
+                        }
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                 }

@@ -65,5 +65,5 @@ public class ComprobanteElectronico {
     }
 
     public enum TipoComprobante { BOLETA, FACTURA, NOTA_CREDITO, NOTA_DEBITO }
-    public enum EstadoSunat { PENDIENTE, ACEPTADO, RECHAZADO, ERROR }
+    public enum EstadoSunat { PENDIENTE, SIMULADO, ACEPTADO, RECHAZADO, ERROR }
 }

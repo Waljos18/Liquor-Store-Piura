@@ -203,8 +203,9 @@ public class SunatService {
                 // Simular respuesta exitosa después de un delay
                 Thread.sleep(1000);
                 
-                return crearRespuesta("ACEPTADO", 
-                        "Comprobante aceptado (simulación ambiente pruebas)", comprobante);
+                // SIMULADO: NO se envió a SUNAT; no tiene validez tributaria
+                return crearRespuesta("SIMULADO",
+                        "Envío simulado (ambiente pruebas): el comprobante NO fue enviado a SUNAT", comprobante);
             }
 
             // En producción, hacer el envío real
